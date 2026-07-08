@@ -4,7 +4,7 @@ REM Double-click this file to start everything
 
 setlocal enabledelayedexpansion
 
-cd /d "c:\Users\medved01\OneDrive - TMC\1\FEB timing\FEB-Timing"
+cd /d "%~dp0.."
 
 echo.
 echo ========================================
@@ -21,22 +21,22 @@ timeout /t 1 /nobreak >nul
 
 REM Start Backend in new terminal
 echo Starting Backend Server (Port 8000)...
-start "FEB Backend Server" cmd /k "python -m uvicorn python.receiver:app --host 0.0.0.0 --port 8000"
+start "FEB Backend Server" cmd /k "cd %~dp0..\src\backend && uv run uvicorn receiver:app --host 0.0.0.0 --port 8000"
 
 REM Wait for backend to initialize
 timeout /t 3 /nobreak >nul
 
 REM Start Frontend in new terminal
 echo Starting Frontend Server (Port 3000)...
-start "FEB Frontend Server" cmd /k "npm run dev"
+start "FEB Frontend Server" cmd /k "cd %~dp0..\src\frontend && npm run dev"
 
 REM Start Laser Gate Monitor in new terminal
 echo Starting Laser Gate Monitor (COM7)...
-start "FEB Laser Gate Monitor" cmd /k "python read_laser.py"
+start "FEB Laser Gate Monitor" cmd /k "cd %~dp0 && python read_laser.py"
 
 REM Start Hub Monitor in new terminal
 echo Starting Hub Monitor (COM8)...
-start "FEB Hub Monitor" cmd /k "python read_hub.py"
+start "FEB Hub Monitor" cmd /k "cd %~dp0 && python read_hub.py"
 
 REM Wait for frontend to start
 timeout /t 5 /nobreak >nul

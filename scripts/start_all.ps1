@@ -11,7 +11,7 @@
 #>
 
 # Configuration
-$PROJECT_ROOT = "c:\Users\medved01\OneDrive - TMC\1\FEB timing\FEB-Timing"
+$PROJECT_ROOT = $PSScriptRoot | Split-Path -Parent | Split-Path -Parent
 $BACKEND_PORT = 8000
 $FRONTEND_PORT = 3000
 $DASHBOARD_URL = "http://localhost:$FRONTEND_PORT"
@@ -22,7 +22,7 @@ Write-Host "╚═════════════════════�
 Write-Host ""
 
 # Check if running from correct directory
-if (!(Test-Path "$PROJECT_ROOT\package.json")) {
+if (!(Test-Path "$PROJECT_ROOT\src\frontend\package.json")) {
     Write-Host "❌ Error: Cannot find project files" -ForegroundColor Red
     Write-Host "   Expected: $PROJECT_ROOT" -ForegroundColor Yellow
     exit 1
@@ -67,7 +67,7 @@ Write-Host "🚀 Starting servers..." -ForegroundColor Cyan
 Write-Host ""
 
 # Start Backend
-$backendCmd = "python -m uvicorn python.receiver:app --host 0.0.0.0 --port $BACKEND_PORT; `
+$backendCmd = "cd $PROJECT_ROOT\src\backend; uv run uvicorn receiver:app --host 0.0.0.0 --port $BACKEND_PORT; `
 Read-Host 'Press Enter to close this window'"
 
 Start-InNewTerminal -Title "Backend Server (Port $BACKEND_PORT)" -Command $backendCmd
@@ -97,7 +97,7 @@ if ($backendReady) {
 Write-Host ""
 
 # Start Frontend
-$frontendCmd = "npm run dev; `
+$frontendCmd = "cd $PROJECT_ROOT\src\frontend; npm run dev; `
 Read-Host 'Press Enter to close this window'"
 
 Start-InNewTerminal -Title "Frontend Server (Port $FRONTEND_PORT)" -Command $frontendCmd

@@ -7,7 +7,7 @@ import logging
 import threading
 from contextlib import asynccontextmanager
 from typing import Set, Tuple, List
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, BackgroundTasks
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 

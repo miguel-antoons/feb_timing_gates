@@ -1,0 +1,5 @@
+{
+  "name": "FEB Race Timing Dashboard",
+  "description": "A professional race timing dashboard for Formula E Belgium featuring live telemetry, gate intervals, and track position monitoring.",
+  "requestFramePermissions": []
+}

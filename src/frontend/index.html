@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FEB Race Timing Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#74FA81",
+            "primary-dark": "#084C3E",
+            "primary-glow": "rgba(116, 250, 129, 0.5)",
+            "secondary": "#00f0ff",
+            "background-dark": "#020408",
+            "surface-dark": "#0b101a",
+            "surface-border": "#1e2636",
+            "text-main": "#ffffff",
+            "text-muted": "#94a3b8",
+          },
+          fontFamily: {
+            "display": ["Spline Sans", "sans-serif"],
+            "mono": ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "monospace"],
+          },
+          boxShadow: {
+            'neon': '0 0 5px theme("colors.primary"), 0 0 20px theme("colors.primary-glow")',
+            'neon-sm': '0 0 2px theme("colors.primary"), 0 0 10px theme("colors.primary-glow")',
+          },
+          backgroundImage: {
+            'grid-pattern': "linear-gradient(to right, #1e2636 1px, transparent 1px), linear-gradient(to bottom, #1e2636 1px, transparent 1px)",
+          }
+        },
+      },
+    }
+  </script>
+  <style>
+    body {
+      background-color: #020408;
+      color: #ffffff;
+    }
+
+    .tabular-nums {
+      font-feature-settings: "tnum";
+      font-variant-numeric: tabular-nums;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #0b101a;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #1e2636;
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #74FA81;
+    }
+
+    .race-car-path {
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 1000;
+      animation: dash 5s linear infinite;
+    }
+
+    @keyframes dash {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+  </style>
+
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>

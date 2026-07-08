@@ -3,126 +3,123 @@
 A real-time timing system for racing events, powered by Arduino hardware and a modern React dashboard.
 
 ## Overview
-This system consists of two parts:
-1.  **Python Backend (`receiver.py`)**: Reads serial data from an Arduino (or simulated triggers), filters duplicates, and broadcasts events via WebSocket.
-2.  **React Frontend**: Connects to the backend via WebSocket to display live lap times, sector splits, and trap speeds.
 
-## 1. Installation & Setup
-
-### prerequisites
-*   **Python 3.10+** (Recommend 3.11)
-*   **Node.js 18+**
-
-### Backend Setup (Python)
-1.  Navigate to the project root.
-2.  Install python dependencies:
-    ```bash
-    pip install -r python/requirements.txt
-    ```
-
-### Frontend Setup (React)
-1.  Install node modules:
-    ```bash
-    npm install
-    ```
+This system provides complete race timing capabilities with:
+- **Hardware**: ESP32-based wireless laser timing gates + hub receiver
+- **Backend**: Python FastAPI server with WebSocket broadcasting (uses **uv** for dependency management)
+- **Frontend**: React dashboard displaying live lap times, sector splits, and trap speeds
 
 ---
 
-## 2. Running the System
+## Project Structure
 
-You need two terminal windows running simultaneously.
-
-### Terminal 1: Start the Backend Server
-This server listens for Arduino data on `COM4` (by default) and hosts the WebSocket API.
-
-```bash
-# From project root
-uvicorn python.receiver:app --port 8000 --reload
 ```
-*   The server will start on `http://localhost:8000`.
-*   If no Arduino is connected, you will see harmless "Connection failed... retrying" logs.
-
-### Terminal 2: Start the Frontend Dashboard
-```bash
-# From project root
-npm run dev
+FEB-Timing/
+├── src/
+│   ├─ backend/          # Python backend (FastAPI + WebSocket + uv)
+│   │   ├─ receiver.py         # Main server
+│   │   ├─ pyproject.toml     # uv dependencies
+│   │   └─ requirements.txt    # Legacy pip backup
+│   ├─ frontend/         # React dashboard (Vite)
+│   │   ├─ App.tsx            # Main React app
+│   │   └─ components/       # React components
+│   └─ esp32/            # Arduino sketches
+├── scripts/            # Utility and startup scripts
+│   ├─ start_all.bat    # Windows (double-click)
+│   ├─ start_all.ps1    # Windows (PowerShell)
+│   └─ start_all.sh     # Linux/macOS
+└── documentation/      # Complete documentation
+   ├─ INDEX.md          # Documentation index
+   └─ guides/           # All guides
+      ├─ USER_GUIDE.md          # User guide and basic usage
+      ├─ PROJECT_SUMMARY.md     # System overview
+      ├─ QUICK_REFERENCE.md      # Common tasks & troubleshooting
+      ├─ COMPLETE_SETUP_GUIDE.md # Full technical details
+      └─ HARDWARE_SETUP_CHECKLIST.md # Hardware verification
 ```
-*   Open your browser to `http://localhost:3000`.
-*   Check the browser console (F12) to confirm: `Connected to Timing Server`.
 
 ---
 
-## 3. Simulating Triggers (Manual Testing)
+## Quick Start
 
-If you don't have the hardware connected, you can simulate gate triggers using the API. The system treats these exactly like real hardware events.
+### Windows
+- **Double-click:** `scripts/start_all.bat`
+- **PowerShell:** Run `./scripts/start_all.ps1`
 
-**IMPORTANT: The system filters duplicate events.**
-To trigger a *new* lap or speed trap, you must change the **`event_id`** (the last number in the CSV string) for each request.
+### Linux/macOS
+- **Terminal:** 
+  ```bash
+  chmod +x scripts/start_all.sh  # If not already executable
+  ./scripts/start_all.sh
+  ```
 
-### API Endpoint
-`POST http://localhost:8000/api/simulate`
-
-### Example Scenarios
-
-#### 1. Trigger Gate 1 (Start / Finish Lap)
-Use `gate_id = 1`. Increment the last number (`101` -> `102` -> `103`...) for each new lap.
-
-**Bash / Mac / Linux:**
-```bash
-curl -X POST http://localhost:8000/api/simulate \
-  -H "Content-Type: application/json" \
-  -d "{\"raw_line\": \"1,1708081230,123456,1,101\"}"
-```
-
-**Windows (PowerShell):**
-```powershell
-Invoke-RestMethod -Uri "http://localhost:8000/api/simulate" `
-  -Method Post `
-  -ContentType "application/json" `
-  -Body '{"raw_line": "1,1708081230,123456,1,101"}'
-```
-
-#### 2. Trigger Gate 2 (Trap Speed)
-Use `gate_id = 2`. This calculates speed based on time since the last Gate 1 trigger.
-
-**Bash / Mac / Linux:**
-```bash
-curl -X POST http://localhost:8000/api/simulate \
-  -H "Content-Type: application/json" \
-  -d "{\"raw_line\": \"2,1708081250,500000,1,201\"}"
-```
-
-**Windows (PowerShell):**
-```powershell
-Invoke-RestMethod -Uri "http://localhost:8000/api/simulate" `
-  -Method Post `
-  -ContentType "application/json" `
-  -Body '{"raw_line": "2,1708081250,500000,1,201"}'
-```
-
-### Data Format Explained
-The simulator expects a raw CSV string simulating the Arduino output:
-`gate_id, gps_s, gps_us, beam_state, event_id`
-
-*   `gate_id`: `1` (Start/Finish) or `2` (Trap Speed).
-*   `gps_s`: Unix timestamp (seconds).
-*   `gps_us`: Microseconds.
-*   `beam_state`: `1` (Broken) or `0`.
-*   `event_id`: **Unique ID** (increment this manually for simulation).
+The system will:
+1. Start Python backend on port 8000 (using uv)
+2. Start React frontend on port 3000
+3. Open dashboard in your browser at `http://localhost:3000`
 
 ---
 
-## 4. Configuration
+## Installation
 
-### Changing COM Port
-If your Arduino is on a different port (e.g., `COM3` or `/dev/ttyUSB0`), set it via environment variable before running uvicorn:
+### Prerequisites
+- **Python 3.10+** (Recommend 3.11+)
+- **Node.js 18+** (LTS recommended)
 
-**Windows (PowerShell):**
-```powershell
-$env:SERIAL_PORT="COM3"; uvicorn python.receiver:app --port 8000
-```
+### Backend (Python)
 
-**Linux/Mac:**
+**Install uv (if not already installed):**
 ```bash
-SERIAL_PORT=/dev/ttyUSB0 uvicorn python.receiver:app --port 8000
+# Linux/macOS
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows (PowerShell)
+irm https://astral.sh/uv/install.ps1 | iex
 ```
+
+**Install Python dependencies:**
+```bash
+cd src/backend
+uv sync
+```
+
+### Frontend (React)
+```bash
+cd src/frontend
+npm install
+```
+
+---
+
+## Documentation
+
+Complete documentation is available in the `documentation/` folder:
+
+- **[Documentation Index](documentation/INDEX.md)** - Start here for all documentation
+- **[User Guide](documentation/guides/USER_GUIDE.md)** - Installation, setup, and usage
+- **[Quick Reference](documentation/guides/QUICK_REFERENCE.md)** - Common tasks and troubleshooting
+- **[Project Summary](documentation/guides/PROJECT_SUMMARY.md)** - System overview and architecture
+- **[Complete Setup Guide](documentation/guides/COMPLETE_SETUP_GUIDE.md)** - Full technical documentation
+- **[Hardware Setup Checklist](documentation/guides/HARDWARE_SETUP_CHECKLIST.md)** - Hardware verification steps
+
+---
+
+## Platform Support
+
+| Platform | Startup Script | Backend Command | Dependency Management |
+|----------|---------------|-----------------|----------------------|
+| **Windows** | `scripts/start_all.bat` | `uv run uvicorn receiver:app` | uv (pyproject.toml) |
+| **Windows** | `scripts/start_all.ps1` | `uv run uvicorn receiver:app` | uv (pyproject.toml) |
+| **Linux/macOS** | `scripts/start_all.sh` | `uv run uvicorn receiver:app` | uv (pyproject.toml) |
+
+---
+
+## Support
+
+For troubleshooting and detailed information, refer to the [Documentation Index](documentation/INDEX.md).
+
+**Need uv?** Install from https://astral.sh/uv
+
+**Need help?** Check the [Quick Reference](documentation/guides/QUICK_REFERENCE.md) for platform-specific troubleshooting.
+
+Good luck with your timing system! 🏁

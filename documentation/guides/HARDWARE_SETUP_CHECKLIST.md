@@ -22,21 +22,52 @@ This checklist will help verify everything is connected and working correctly be
 - [ ] If missing, check Device Manager and restart device
 
 ### Software Prerequisites
-- [ ] Python 3.10+ installed
-- [ ] Node.js 18+ installed
-- [ ] Project dependencies installed (npm install, pip install -r requirements.txt)
+- [ ] Python 3.10+ installed (Recommend 3.11+)
+- [ ] Node.js 18+ installed (LTS recommended)
+- [ ] Project dependencies installed
+
+**Backend dependencies (using uv - recommended):**
+```bash
+cd src/backend
+uv sync
+```
+
+**Backend dependencies (using pip):**
+```bash
+pip install -r src/backend/requirements.txt
+```
+
+**Frontend dependencies:**
+```bash
+cd src/frontend
+npm install
+```
 
 ---
 
 ## 🚀 Startup Verification
 
 ### Step 1: Run Start Script
+
+**Windows:**
 ```
-📁 Double-click: start_all.bat
+📁 Double-click: scripts/start_all.bat
 ```
-- [ ] Two terminal windows opened
-- [ ] Backend terminal shows: `Uvicorn running on http://0.0.0.0:8000`
-- [ ] Frontend terminal shows: `VITE ready in XXXX ms` and `Local: http://localhost:3000`
+
+**Windows (PowerShell):**
+```powershell
+./scripts/start_all.ps1
+```
+
+**Linux/macOS:**
+```bash
+chmod +x scripts/start_all.sh
+./scripts/start_all.sh
+```
+
+- [ ] Two terminal windows/processes started
+- [ ] Backend shows: `Uvicorn running on http://0.0.0.0:8000`
+- [ ] Frontend shows: `VITE ready in XXXX ms` and `Local: http://localhost:3000`
 - [ ] Dashboard opened in browser at http://localhost:3000
 
 ### Step 2: Check Backend Connection
@@ -76,7 +107,7 @@ Invoke-RestMethod -Uri "http://localhost:8000/api/simulate" -Method Post -Conten
 
 ```powershell
 # Terminal 1: Start monitoring laser gate
-python "read_laser.py"
+python "scripts/read_laser.py"
 
 # Terminal 2: While monitoring, block laser beam with your hand
 # You should see output in Terminal 1 if working
@@ -97,7 +128,7 @@ python "read_laser.py"
 ### Test Procedure
 1. Start monitoring:
    ```powershell
-   python "read_laser.py"
+   python "scripts/read_laser.py"
    ```
 
 2. Block laser beam with opaque object (hand, cardboard)
@@ -119,7 +150,7 @@ python "read_laser.py"
 - [ ] Verify COM8 in Device Manager
 - [ ] Try different USB port
 - [ ] Restart Hub device
-- [ ] Update COM port in `python/receiver.py` if different
+- [ ] Update COM port in `src/backend/receiver.py` if different
 
 ### Hardware Not Detecting Laser Breaks
 **Issue**: Monitor shows no output when blocking beam
@@ -132,7 +163,7 @@ python "read_laser.py"
 ### Dashboard Not Loading
 **Issue**: http://localhost:3000 shows error
 - [ ] Check frontend terminal for errors
-- [ ] Kill and restart frontend: `npm run dev`
+- [ ] Kill and restart frontend: `cd src/frontend && npm run dev`
 - [ ] Try different browser (Chrome, Edge, Firefox)
 
 ### Port Already in Use
@@ -164,7 +195,7 @@ Check this table to verify all systems are working:
 **Morning Setup:**
 ```
 1. Plug in USB cables (COM7, COM8)
-2. Double-click start_all.bat
+2. Double-click scripts/start_all.bat
 3. Wait for dashboard to load (30 seconds)
 4. Test simulation API
 5. Align laser gates at track
@@ -195,7 +226,7 @@ Check this table to verify all systems are working:
 **System Won't Start:**
 1. Restart computer
 2. Reconnect USB cables
-3. Run `start_all.bat` again
+3. Run `scripts/start_all.bat` again
 
 **No Data Appearing:**
 1. Check laser/receiver alignment
@@ -203,8 +234,8 @@ Check this table to verify all systems are working:
 3. Check backend logs for errors
 
 **Still Not Working:**
-1. Check `COMPLETE_SETUP_GUIDE.md` for full troubleshooting
-2. Check `QUICK_REFERENCE.md` for common issues
+1. Check [Complete Setup Guide](../guides/COMPLETE_SETUP_GUIDE.md) for full troubleshooting
+2. Check [Quick Reference](../guides/QUICK_REFERENCE.md) for common issues
 3. Review hardware alignment (most common issue)
 
 ---

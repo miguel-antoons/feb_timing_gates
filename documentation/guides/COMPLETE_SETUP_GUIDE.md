@@ -19,7 +19,7 @@
 
 **Run this:**
 ```powershell
-& "c:\Users\medved01\OneDrive - TMC\1\FEB timing\FEB-Timing\start_all.ps1"
+& "./scripts/start_all.ps1"
 ```
 
 This will automatically:
@@ -33,16 +33,39 @@ This will automatically:
 ## 📋 Manual Setup (If Preferred)
 
 ### Prerequisites
-- Python 3.10+ (already installed)
-- Node.js 18+ (already installed)
-- Dependencies already installed
+- Python 3.10+ (Recommend 3.11+)
+- Node.js 18+ (LTS recommended)
+
+### Step 0: Install Dependencies
+
+**Backend (Python) - Using uv (Recommended):**
+```bash
+cd src/backend
+uv sync
+```
+
+**Backend (Python) - Using pip (Alternative):**
+```bash
+pip install -r src/backend/requirements.txt
+```
+
+**Frontend (React):**
+```bash
+cd src/frontend
+npm install
+```
 
 ### Step 1: Start Backend Server
 
-**Terminal 1:**
-```powershell
-cd "c:\Users\medved01\OneDrive - TMC\1\FEB timing\FEB-Timing"
-python -m uvicorn python.receiver:app --host 0.0.0.0 --port 8000
+**Terminal 1 - Using uv (Recommended):**
+```bash
+cd src/backend
+uv run uvicorn receiver:app --host 0.0.0.0 --port 8000
+```
+
+**Terminal 1 - Using pip:**
+```bash
+uvicorn src.backend.receiver:app --host 0.0.0.0 --port 8000
 ```
 
 **Expected output:**
@@ -55,8 +78,8 @@ INFO:     Uvicorn running on http://0.0.0.0:8000
 ### Step 2: Start Frontend Server
 
 **Terminal 2:**
-```powershell
-cd "c:\Users\medved01\OneDrive - TMC\1\FEB timing\FEB-Timing"
+```bash
+cd src/frontend
 npm run dev
 ```
 
@@ -80,7 +103,7 @@ Open browser to: **http://localhost:3000**
 
 ### Changing COM Ports
 
-If your ports are different, edit `python/receiver.py`:
+If your ports are different, edit `src/backend/receiver.py`:
 
 ```python
 # Line 23
@@ -90,7 +113,7 @@ SERIAL_PORT = os.getenv("SERIAL_PORT", "COM8")  # Change COM8 to your port
 Or set environment variable before running:
 ```powershell
 $env:SERIAL_PORT="COM3"
-python -m uvicorn python.receiver:app --port 8000
+python -m uvicorn src.backend.receiver:app --port 8000
 ```
 
 ---
@@ -132,7 +155,7 @@ Invoke-RestMethod -Uri "http://localhost:8000/api/simulate" `
 
 **Monitor COM7:**
 ```powershell
-python "c:\Users\medved01\OneDrive - TMC\1\FEB timing\FEB-Timing\read_laser.py"
+python "./scripts/read_laser.py"
 ```
 
 ---
@@ -172,13 +195,13 @@ python "c:\Users\medved01\OneDrive - TMC\1\FEB timing\FEB-Timing\read_laser.py"
 
 ## 🔧 Configuration Files
 
-### `python/receiver.py`
+### `src/backend/receiver.py`
 - Main backend server
 - Reads from COM8 at 115200 baud
 - Broadcasts via WebSocket on port 8000
 - Filters duplicate events by (gate_id, event_id)
 
-### `vite.config.ts`
+### `src/frontend/vite.config.ts`
 - React frontend build config
 - Dev server on port 3000
 
@@ -205,7 +228,7 @@ Error: Connection failed... retrying
 **Solutions:**
 - Check Device Manager for correct COM port
 - Verify USB cable is properly connected
-- Update `SERIAL_PORT` in `python/receiver.py`
+- Update `SERIAL_PORT` in `src/backend/receiver.py`
 - Restart the device
 
 ### Dashboard shows no data
@@ -218,7 +241,7 @@ Error: Connection failed... retrying
 2. **Distance**: Test within 1 meter first
 3. **Stability**: Secure both devices so they don't move
 4. **Obstruction**: Use opaque object (hand, cardboard) to block beam
-5. **Monitor COM7**: Run `read_laser.py` to see if terminal outputs data
+5. **Monitor COM7**: Run `scripts/read_laser.py` to see if terminal outputs data
 
 ### Port already in use
 ```
@@ -226,7 +249,7 @@ Error: Address already in use
 ```
 **Solutions:**
 - Kill existing processes: `Get-Process python | Stop-Process`
-- Change port: `uvicorn python.receiver:app --port 8001`
+- Change port: `uvicorn src.backend.receiver:app --port 8001`
 
 ---
 
@@ -234,19 +257,30 @@ Error: Address already in use
 
 ```
 FEB-Timing/
-├── App.tsx                 # Main React app
-├── index.html             # HTML entry point
-├── package.json           # Node dependencies
-├── python/
-│   ├── receiver.py        # Backend server
-│   └── requirements.txt    # Python dependencies
-├── components/            # React components
-├── electronics/           # Arduino sketches
-│   ├── sender_sketch_gate_1.ino
-│   ├── sender_sketch_gate_2.ino
-│   └── receiver_sketch.ino
-├── sketches/              # Renamed sketches for Arduino IDE
-└── README.md              # This file
+├── src/
+│   ├─ backend/
+│   │  ├─ receiver.py        # Backend server
+│   │  └─ requirements.txt    # Python dependencies
+│   ├─ frontend/
+│   │  ├─ App.tsx           # Main React app
+│   │  ├─ index.html       # HTML entry point
+│   │  ├─ package.json     # Node dependencies
+│   │  └─ components/      # React components
+│   └─ esp32/
+│      ├─ electronics/     # Arduino sketches
+│      │   ├── sender_sketch_gate_1.ino
+│      │   ├── sender_sketch_gate_2.ino
+│      │   └── receiver_sketch.ino
+│      └─ sketches/        # Renamed sketches for Arduino IDE
+│         ├── receiver_hub/receiver_hub.ino
+│         └── sender_gate_1/sender_gate_1.ino
+├── scripts/              # Utility scripts
+│   ├─ start_all.bat
+│   ├─ start_all.ps1
+│   ├─ read_laser.py
+│   └─ read_hub.py
+└── documentation/        # Documentation
+   └── INDEX.md
 ```
 
 ---
@@ -256,13 +290,13 @@ FEB-Timing/
 If firmware needs updating, use Arduino IDE 2.3.10:
 
 **Gate (COM7):**
-1. File → Open → `sketches/sender_gate_1/sender_gate_1.ino`
+1. File → Open → `src/esp32/sketches/sender_gate_1/sender_gate_1.ino`
 2. Tools → Board → `ESP32C3 Dev Module`
 3. Tools → Port → `COM7`
 4. Upload (Ctrl+U)
 
 **Hub (COM8):**
-1. File → Open → `sketches/receiver_hub/receiver_hub.ino`
+1. File → Open → `src/esp32/sketches/receiver_hub/receiver_hub.ino`
 2. Tools → Board → `ESP32C3 Dev Module`
 3. Tools → Port → `COM8`
 4. Upload (Ctrl+U)

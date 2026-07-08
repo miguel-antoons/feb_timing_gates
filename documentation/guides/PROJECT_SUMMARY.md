@@ -20,13 +20,24 @@ The FEB Timing System is a **complete, working race timing solution** consisting
 
 ## 🚀 Quickest Start (One Minute)
 
+### Windows
 ```
-📁 Double-click this file:
-   c:\Users\medved01\OneDrive - TMC\1\FEB timing\FEB-Timing\start_all.bat
+📁 Double-click: scripts/start_all.bat
+```
+
+### Windows (PowerShell)
+```powershell
+./scripts/start_all.ps1
+```
+
+### Linux/macOS
+```bash
+chmod +x scripts/start_all.sh
+./scripts/start_all.sh
 ```
 
 This automatically:
-- ✅ Starts Python backend (port 8000)
+- ✅ Starts Python backend (port 8000) using uv
 - ✅ Starts React frontend (port 3000)
 - ✅ Opens dashboard in browser
 - ✅ Shows status in terminals
@@ -41,12 +52,12 @@ Keep these files handy for reference:
 
 | File | Purpose | Best For |
 |------|---------|----------|
-| **COMPLETE_SETUP_GUIDE.md** | Full technical reference | Learning how system works |
-| **QUICK_REFERENCE.md** | Common tasks & troubleshooting | Day-to-day operations |
-| **HARDWARE_SETUP_CHECKLIST.md** | Verification steps | Setup verification |
-| **README.md** | Official project docs | Background info |
-| **start_all.bat** | One-click startup | Running the system |
-| **start_all.ps1** | Advanced startup | PowerShell users |
+| **[Complete Setup Guide](../guides/COMPLETE_SETUP_GUIDE.md)** | Full technical reference | Learning how system works |
+| **[Quick Reference](../guides/QUICK_REFERENCE.md)** | Common tasks & troubleshooting | Day-to-day operations |
+| **[Hardware Setup Checklist](../guides/HARDWARE_SETUP_CHECKLIST.md)** | Verification steps | Setup verification |
+| **[User Guide](../guides/USER_GUIDE.md)** | Official project docs | Background info |
+| **scripts/start_all.bat** | One-click startup | Running the system |
+| **scripts/start_all.ps1** | Advanced startup | PowerShell users |
 
 ---
 
@@ -73,8 +84,9 @@ Keep these files handy for reference:
 |-------|-----------|------|--------|
 | Frontend | React + Vite | 3000 | ✅ Running |
 | Backend | FastAPI + Uvicorn | 8000 | ✅ Running |
+| Dependency Mgmt | uv + pyproject.toml | - | ✅ Configured |
 | Database | In-memory (Python) | - | ✅ Ready |
-| Serial | pyserial | COM8 | ✅ Connected |
+| Serial | pyserial | Varies | ✅ Configured |
 | WebSocket | WebSockets | 8000 | ✅ Active |
 
 ---
@@ -134,25 +146,28 @@ Invoke-RestMethod -Uri "http://localhost:8000/api/simulate" `
 
 ### Option 3: Manual Monitor
 ```powershell
-python "read_laser.py"    # Monitor COM7
-python "read_hub.py"      # Monitor COM8
+python "scripts/read_laser.py"    # Monitor COM7
+python "scripts/read_hub.py"      # Monitor COM8
 ```
 
 ---
 
 ## 🛠️ System Components
 
-### Backend (`python/receiver.py`)
-- Listens on COM8 (hub) at 115200 baud
+### Backend (`src/backend/receiver.py`)
+- Listens on configured serial port at 115200 baud
 - Runs FastAPI server on port 8000
+- Uses **uv** for dependency management (pyproject.toml)
 - Broadcasts events via WebSocket
 - Filters duplicate events
+- Requires Python 3.10+
 
-### Frontend (`App.tsx` + components)
-- React dashboard on port 3000
+### Frontend (`src/frontend/App.tsx` + components)
+- React dashboard on port 3000 (Vite)
 - Connects to backend WebSocket
 - Displays real-time data
 - Responsive design
+- Requires Node.js 18+
 
 ### Hardware
 - Gate 1 (COM7): Laser emitter + wireless sender
@@ -176,7 +191,7 @@ python "read_hub.py"      # Monitor COM8
 ## 🔄 Workflow
 
 ### Before Race
-1. Double-click `start_all.bat`
+1. Double-click `scripts/start_all.bat`
 2. Wait for dashboard to load
 3. Run simulation test
 4. Mount and align laser gates
@@ -199,19 +214,19 @@ python "read_hub.py"      # Monitor COM8
 ## 🚨 Troubleshooting Quick Links
 
 **Issue** → **Solution File**
-- System won't start → `COMPLETE_SETUP_GUIDE.md` (section: Troubleshooting)
-- Laser not detecting → `QUICK_REFERENCE.md` (section: Common Tasks)
-- Hardware verification → `HARDWARE_SETUP_CHECKLIST.md`
-- Port conflicts → `QUICK_REFERENCE.md` (section: Port already in use)
+- System won't start → [Complete Setup Guide](../guides/COMPLETE_SETUP_GUIDE.md) (section: Troubleshooting)
+- Laser not detecting → [Quick Reference](../guides/QUICK_REFERENCE.md) (section: Common Tasks)
+- Hardware verification → [Hardware Setup Checklist](../guides/HARDWARE_SETUP_CHECKLIST.md)
+- Port conflicts → [Quick Reference](../guides/QUICK_REFERENCE.md) (section: Port already in use)
 
 ---
 
 ## 📞 Support Resources
 
 ### Internal Documentation
-- ✅ COMPLETE_SETUP_GUIDE.md - Complete reference
-- ✅ QUICK_REFERENCE.md - Fast answers
-- ✅ HARDWARE_SETUP_CHECKLIST.md - Verification
+- ✅ [Complete Setup Guide](../guides/COMPLETE_SETUP_GUIDE.md) - Complete reference
+- ✅ [Quick Reference](../guides/QUICK_REFERENCE.md) - Fast answers
+- ✅ [Hardware Setup Checklist](../guides/HARDWARE_SETUP_CHECKLIST.md) - Verification
 - ✅ This file - Overview
 
 ### External References
@@ -226,7 +241,7 @@ python "read_hub.py"      # Monitor COM8
 
 Before going live, verify:
 
-- [ ] `start_all.bat` runs without errors
+- [ ] `scripts/start_all.bat` runs without errors
 - [ ] Backend shows `"Connected to COM8"`
 - [ ] Frontend loads at http://localhost:3000
 - [ ] Simulation API test works
@@ -239,7 +254,7 @@ Before going live, verify:
 ## 🎯 Next Steps
 
 ### Immediate
-1. ✅ System is ready - run `start_all.bat`
+1. ✅ System is ready - run `scripts/start_all.bat`
 2. ✅ Test with simulations
 3. ✅ Align laser gates at track
 
@@ -259,20 +274,43 @@ Before going live, verify:
 
 ## 📝 Configuration Reference
 
+### Python Dependency Management
+
+The project uses **[uv](https://github.com/astral-sh/uv)** for Python dependency management (recommended).
+
+**Using uv:**
+```bash
+cd src/backend
+uv sync              # Install dependencies
+uv run uvicorn receiver:app --port 8000  # Run backend
+```
+
+**Using pip (fallback):**
+```bash
+pip install -r src/backend/requirements.txt
+uvicorn src.backend.receiver:app --port 8000
+```
+
 ### Important Files to Modify
 
 **If COM port is different:**
 ```
-File: python/receiver.py
-Line: 23
+File: src/backend/receiver.py
+Line: 25
 Change: SERIAL_PORT = os.getenv("SERIAL_PORT", "COM8")
 ```
 
 **If port conflicts:**
 ```
 Backend: Change --port 8000 to 8001
-Frontend: Edit vite.config.ts
+Frontend: Edit src/frontend/vite.config.ts
 ```
+
+### Configuration Files
+- `src/backend/pyproject.toml` - Python project config (for uv)
+- `src/backend/requirements.txt` - Legacy pip requirements (backup)
+- `src/frontend/vite.config.ts` - Frontend build configuration
+- `src/frontend/tsconfig.json` - TypeScript configuration
 
 ---
 
@@ -280,10 +318,10 @@ Frontend: Edit vite.config.ts
 
 To understand how this works:
 
-1. **Frontend**: Open `App.tsx` to see dashboard code
-2. **Backend**: Open `python/receiver.py` to see server logic
-3. **Hardware**: Check `electronics/` folder for Arduino sketches
-4. **Config**: Edit `vite.config.ts` and `tsconfig.json` as needed
+1. **Frontend**: Open `src/frontend/App.tsx` to see dashboard code
+2. **Backend**: Open `src/backend/receiver.py` to see server logic
+3. **Hardware**: Check `src/esp32/` folder for Arduino sketches
+4. **Config**: Edit `src/frontend/vite.config.ts` and `src/frontend/tsconfig.json` as needed
 
 ---
 
@@ -323,7 +361,7 @@ To understand how this works:
 
 Everything is set up and working. You can now:
 
-1. **Run the system** - Double-click `start_all.bat`
+1. **Run the system** - Double-click `scripts/start_all.bat`
 2. **Test without hardware** - Use simulation API
 3. **Test with hardware** - Align gates and block beam
 4. **Go live** - Deploy at race track
@@ -342,4 +380,4 @@ Everything is set up and working. You can now:
 
 ---
 
-**Questions?** Refer to the documentation files or the QUICK_REFERENCE guide for instant answers.
+**Questions?** Refer to the [documentation files](../INDEX.md) or the [Quick Reference](../guides/QUICK_REFERENCE.md) guide for instant answers.

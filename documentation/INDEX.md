@@ -7,16 +7,30 @@ Welcome! Your FEB Timing System is **fully configured and ready to use**. This f
 ## 🚀 **START HERE** (Pick One)
 
 ### If you want to run the system NOW:
+
+**Windows:**
 ```
-📁 Double-click: start_all.bat
+📁 Double-click: scripts/start_all.bat
 ```
-This starts everything automatically in 2 terminals + opens the dashboard.
+
+**Windows (PowerShell):**
+```powershell
+./scripts/start_all.ps1
+```
+
+**Linux/macOS:**
+```bash
+chmod +x scripts/start_all.sh
+./scripts/start_all.sh
+```
+
+This starts everything automatically in separate terminals + opens the dashboard.
 
 ### If you want to understand the system first:
-📄 Read: `PROJECT_SUMMARY.md` (5-minute overview)
+📄 Read: [Project Summary](guides/PROJECT_SUMMARY.md) (5-minute overview)
 
 ### If you need to troubleshoot something:
-📄 Read: `QUICK_REFERENCE.md` (search for your problem)
+📄 Read: [Quick Reference](guides/QUICK_REFERENCE.md) (search for your problem)
 
 ---
 
@@ -24,12 +38,14 @@ This starts everything automatically in 2 terminals + opens the dashboard.
 
 | File | Purpose | Read Time | Who Should Read |
 |------|---------|-----------|-----------------|
-| **start_all.bat** | One-click startup | N/A | Everyone |
-| **PROJECT_SUMMARY.md** | System overview & status | 5 min | Project lead |
-| **QUICK_REFERENCE.md** | Common tasks & fixes | 5-10 min | Daily operators |
-| **COMPLETE_SETUP_GUIDE.md** | Full technical details | 15-20 min | Developers |
-| **HARDWARE_SETUP_CHECKLIST.md** | Verification steps | 10 min | Setup technician |
-| **README.md** | Original project docs | 10 min | Background reference |
+| **scripts/start_all.bat** | Windows one-click startup | N/A | Windows users |
+| **scripts/start_all.ps1** | Windows PowerShell startup | N/A | Windows users |
+| **scripts/start_all.sh** | Linux/macOS startup | N/A | Linux/macOS users |
+| **[Project Summary](guides/PROJECT_SUMMARY.md)** | System overview & status | 5 min | Project lead |
+| **[Quick Reference](guides/QUICK_REFERENCE.md)** | Common tasks & fixes | 5-10 min | Daily operators |
+| **[Complete Setup Guide](guides/COMPLETE_SETUP_GUIDE.md)** | Full technical details | 15-20 min | Developers |
+| **[Hardware Setup Checklist](guides/HARDWARE_SETUP_CHECKLIST.md)** | Verification steps | 10 min | Setup technician |
+| **[User Guide](guides/USER_GUIDE.md)** | Installation & usage | 10 min | All users |
 
 ---
 
@@ -41,29 +57,29 @@ This starts everything automatically in 2 terminals + opens the dashboard.
 3. System is running
 
 ### "I want to test before using real hardware"
-1. Open `start_all.bat`
-2. Follow simulation examples in `QUICK_REFERENCE.md`
+1. Open `scripts/start_all.bat`
+2. Follow simulation examples in [Quick Reference](guides/QUICK_REFERENCE.md)
 3. See events on dashboard
 
 ### "I need to align the laser gates"
-1. Read: `HARDWARE_SETUP_CHECKLIST.md` → "Hardware Alignment"
-2. Monitor: `python "read_laser.py"`
+1. Read: [Hardware Setup Checklist](guides/HARDWARE_SETUP_CHECKLIST.md) → "Hardware Alignment"
+2. Monitor: `python "scripts/read_laser.py"`
 3. Test blocking the beam
 
 ### "Something isn't working"
-1. Check: `QUICK_REFERENCE.md` → "Troubleshooting"
+1. Check: [Quick Reference](guides/QUICK_REFERENCE.md) → "Troubleshooting"
 2. Try the solution listed
-3. If still broken, read: `COMPLETE_SETUP_GUIDE.md`
+3. If still broken, read: [Complete Setup Guide](guides/COMPLETE_SETUP_GUIDE.md)
 
 ### "I'm setting this up for the first time"
-1. Read: `HARDWARE_SETUP_CHECKLIST.md`
+1. Read: [Hardware Setup Checklist](guides/HARDWARE_SETUP_CHECKLIST.md)
 2. Follow each step carefully
-3. Use `QUICK_REFERENCE.md` if stuck
+3. Use [Quick Reference](guides/QUICK_REFERENCE.md) if stuck
 
 ### "I need technical details"
-1. Read: `COMPLETE_SETUP_GUIDE.md`
-2. Check: `python/receiver.py` (backend code)
-3. Check: `App.tsx` (frontend code)
+1. Read: [Complete Setup Guide](guides/COMPLETE_SETUP_GUIDE.md)
+2. Check: `src/backend/receiver.py` (backend code)
+3. Check: `src/frontend/App.tsx` (frontend code)
 
 ---
 
@@ -103,7 +119,7 @@ Invoke-RestMethod -Uri "http://localhost:8000/api/simulate" -Method Post -Conten
 
 ### Monitor Laser Gate
 ```bash
-python "read_laser.py"
+python "scripts/read_laser.py"
 ```
 
 ### List COM Ports
@@ -129,33 +145,36 @@ python "read_laser.py"
 
 ```
 FEB-Timing/
-├─ Documentation/
+├─ documentation/
 │  ├─ INDEX.md (this file)
-│  ├─ PROJECT_SUMMARY.md
-│  ├─ COMPLETE_SETUP_GUIDE.md
-│  ├─ QUICK_REFERENCE.md
-│  ├─ HARDWARE_SETUP_CHECKLIST.md
-│  └─ README.md
+│  └─ guides/
+│     ├─ PROJECT_SUMMARY.md
+│     ├─ COMPLETE_SETUP_GUIDE.md
+│     ├─ QUICK_REFERENCE.md
+│     ├─ HARDWARE_SETUP_CHECKLIST.md
+│     └─ USER_GUIDE.md
 │
-├─ Scripts/
+├─ scripts/
 │  ├─ start_all.bat (👈 Run this!)
 │  ├─ start_all.ps1
 │  ├─ read_laser.py
 │  ├─ read_hub.py
 │  └─ quick_test.py
 │
-├─ Code/
-│  ├─ python/ (Backend)
+├─ src/
+│  ├─ backend/ (Backend)
 │  │  ├─ receiver.py
 │  │  └─ requirements.txt
-│  ├─ App.tsx (Frontend)
-│  ├─ vite.config.ts
-│  ├─ tsconfig.json
-│  └─ components/ (React components)
+│  ├─ frontend/ (React Frontend)
+│  │  ├─ App.tsx
+│  │  ├─ vite.config.ts
+│  │  ├─ tsconfig.json
+│  │  └─ components/ (React components)
+│  └─ esp32/ (Arduino sketches)
+│     ├─ electronics/
+│     └─ sketches/
 │
-└─ Hardware/
-   ├─ electronics/ (Arduino sketches)
-   └─ sketches/ (Prepared for upload)
+└─ README.md
 ```
 
 ---
@@ -165,21 +184,21 @@ FEB-Timing/
 **If you're new to this system, follow this order:**
 
 1. **Quick Overview** (2 min)
-   - Read: `PROJECT_SUMMARY.md`
+   - Read: [Project Summary](guides/PROJECT_SUMMARY.md)
    
 2. **Run the System** (1 min)
-   - Double-click: `start_all.bat`
+   - Double-click: `scripts/start_all.bat`
    
 3. **Test Software** (5 min)
-   - Follow: `QUICK_REFERENCE.md` → "Test Without Hardware"
+   - Follow: [Quick Reference](guides/QUICK_REFERENCE.md) → "Test Without Hardware"
    
 4. **Set Up Hardware** (15 min)
-   - Read: `HARDWARE_SETUP_CHECKLIST.md`
+   - Read: [Hardware Setup Checklist](guides/HARDWARE_SETUP_CHECKLIST.md)
    - Follow each step
    
 5. **Test Hardware** (10 min)
    - Align laser gates
-   - Monitor COM7
+   - Monitor COM7 with `python "scripts/read_laser.py"`
    - Test beam detection
    
 6. **Deploy** (Depends on your setup)
@@ -212,7 +231,7 @@ Use this quick checklist before each use:
 
 ### Getting an error?
 1. Note the exact error message
-2. Search for it in `QUICK_REFERENCE.md`
+2. Search for it in [Quick Reference](guides/QUICK_REFERENCE.md)
 3. Follow the solution steps
 
 ### Still stuck?
@@ -225,19 +244,19 @@ Use this quick checklist before each use:
 ## 🎯 Common Goals
 
 ### "I want to run the race timing system"
-→ Double-click `start_all.bat` (done!)
+→ Double-click `scripts/start_all.bat` (done!)
 
 ### "I want to test it works"
-→ Read `QUICK_REFERENCE.md` → "Test Without Hardware"
+→ Read [Quick Reference](guides/QUICK_REFERENCE.md) → "Test Without Hardware"
 
 ### "I want to understand how it works"
-→ Read `COMPLETE_SETUP_GUIDE.md`
+→ Read [Complete Setup Guide](guides/COMPLETE_SETUP_GUIDE.md)
 
 ### "I want to fix something"
-→ Read `QUICK_REFERENCE.md` → "Troubleshooting"
+→ Read [Quick Reference](guides/QUICK_REFERENCE.md) → "Troubleshooting"
 
 ### "I want to set it up for the first time"
-→ Read `HARDWARE_SETUP_CHECKLIST.md` completely
+→ Read [Hardware Setup Checklist](guides/HARDWARE_SETUP_CHECKLIST.md) completely
 
 ---
 

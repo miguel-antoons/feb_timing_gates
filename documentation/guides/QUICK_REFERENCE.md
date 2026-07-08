@@ -2,25 +2,43 @@
 
 ## 🚀 Quick Start (Choose One)
 
-### Option 1: Double-Click (Easiest)
+### Windows Options
+
+#### Option 1: Double-Click (Easiest)
 ```
-📁 Double-click: start_all.bat
+📁 Double-click: scripts/start_all.bat
    Opens backend and frontend in separate windows + dashboard
 ```
 
-### Option 2: PowerShell (Advanced)
+#### Option 2: PowerShell (Advanced)
 ```powershell
-& "c:\Users\medved01\OneDrive - TMC\1\FEB timing\FEB-Timing\start_all.ps1"
+& "./scripts/start_all.ps1"
 ```
 
-### Option 3: Manual (Full Control)
-```powershell
-# Terminal 1 - Backend
-cd "c:\Users\medved01\OneDrive - TMC\1\FEB timing\FEB-Timing"
-python -m uvicorn python.receiver:app --port 8000
+### Linux/macOS Option
 
-# Terminal 2 - Frontend
-cd "c:\Users\medved01\OneDrive - TMC\1\FEB timing\FEB-Timing"
+#### Option 3: Shell Script
+```bash
+chmod +x scripts/start_all.sh
+./scripts/start_all.sh
+```
+
+### Manual (Full Control - All Platforms)
+
+#### Terminal 1 - Backend (Using uv - Recommended)
+```bash
+cd src/backend
+uv run uvicorn receiver:app --port 8000
+```
+
+#### Terminal 1 - Backend (Using pip)
+```bash
+uvicorn src.backend.receiver:app --port 8000
+```
+
+#### Terminal 2 - Frontend
+```bash
+cd src/frontend
 npm run dev
 ```
 
@@ -36,22 +54,44 @@ Invoke-RestMethod -Uri "http://localhost:8000/api/simulate" -Method Post -Conten
 ```
 
 ### Check Hardware Connection
+
+**Windows (PowerShell):**
 ```powershell
 # List COM ports
 [System.IO.Ports.SerialPort]::GetPortNames()
 
-# Monitor laser gate (COM7)
-python "read_laser.py"
+# Monitor laser gate
+python scripts/read_laser.py
 
-# Monitor hub (COM8)
-python "read_hub.py"
+# Monitor hub
+python scripts/read_hub.py
+```
+
+**Linux/macOS:**
+```bash
+# List serial ports
+ls /dev/tty*
+
+# Or use dmesg after plugging in
+sudo dmesg | grep tty
+
+# Monitor laser gate
+python3 scripts/read_laser.py
+
+# Monitor hub
+python3 scripts/read_hub.py
 ```
 
 ### Change COM Port (If Different)
-Edit `python/receiver.py` line 23:
+Edit `src/backend/receiver.py` line 25:
 ```python
 SERIAL_PORT = os.getenv("SERIAL_PORT", "COM8")  # Change to your port
 ```
+
+**Examples:**
+- Windows: `COM3`, `COM4`, `COM7`, `COM8`
+- Linux: `/dev/ttyUSB0`, `/dev/ttyACM0`
+- macOS: `/dev/cu.usbserial-XXXX`, `/dev/cu.usbmodemXXXX`
 
 ---
 
@@ -61,10 +101,17 @@ SERIAL_PORT = os.getenv("SERIAL_PORT", "COM8")  # Change to your port
 **Problem**: Backend can't find the Hub on COM8
 
 **Solutions:**
-1. Check Device Manager for actual COM port
+1. **Check actual port:**
+   - Windows: Check Device Manager
+   - Linux/macOS: Run `ls /dev/tty*`
 2. Verify Hub is plugged in with good USB cable
-3. Update COM port in `python/receiver.py`
+3. Update COM port in `src/backend/receiver.py`
 4. Try unplugging and replugging Hub
+5. **Linux-specific:** Ensure user has permission to access serial port:
+   ```bash
+   sudo usermod -a -G dialout $USER
+   # Log out and back in for changes to take effect
+   ```
 
 ---
 
@@ -73,13 +120,24 @@ SERIAL_PORT = os.getenv("SERIAL_PORT", "COM8")  # Change to your port
 
 **Solutions:**
 1. Close other applications using port 8000
-2. Or change port:
+2. **Windows:** Change port:
    ```powershell
-   python -m uvicorn python.receiver:app --port 8001
+   cd src\backend; uv run uvicorn receiver:app --port 8001
    ```
-3. Or kill existing Python:
+   Or kill existing Python:
    ```powershell
    Get-Process python | Stop-Process -Force
+   ```
+3. **Linux/macOS:** Change port:
+   ```bash
+   cd src/backend; uv run uvicorn receiver:app --port 8001
+   ```
+   Or find and kill process:
+   ```bash
+   lsof -i :8000  # Find process ID
+   kill -9 <PID>
+   # Or
+   pkill -f uvicorn
    ```
 
 ---
@@ -88,11 +146,22 @@ SERIAL_PORT = os.getenv("SERIAL_PORT", "COM8")  # Change to your port
 **Problem**: Frontend won't show timing events
 
 **Checklist:**
-- [ ] Backend shows `"Connected to COM8"` in logs
+- [ ] Backend shows `"Connected to [PORT]"` in logs (port varies by platform)
 - [ ] Frontend loaded without errors
 - [ ] Try simulation API test first
 - [ ] Check browser console (F12) for errors
 - [ ] Verify backend is on http://localhost:8000
+
+**Test backend manually:**
+```bash
+# Check if backend is running
+curl http://localhost:8000
+
+# Test simulation API
+curl -X POST http://localhost:8000/api/simulate \
+  -H "Content-Type: application/json" \
+  -d '{"raw_line": "1,1708081230,123456,1,101"}'
+```
 
 ---
 
@@ -114,11 +183,29 @@ SERIAL_PORT = os.getenv("SERIAL_PORT", "COM8")  # Change to your port
    - Not transparent materials
 
 **Debug:**
+
+**Windows:**
 ```powershell
 # Monitor COM7 for sensor output
-python "read_laser.py"
+python scripts/read_laser.py
 # While monitoring, slowly block laser beam
 # Should see data in terminal if working
+```
+
+**Linux/macOS:**
+```bash
+# Monitor for sensor output (adjust port as needed)
+python3 scripts/read_laser.py
+# While monitoring, slowly block laser beam
+# Should see data in terminal if working
+```
+
+**Tip:** If you get permission errors on Linux/macOS, try:
+```bash
+# Temporarily run as root to test
+sudo python3 scripts/read_laser.py
+# If this works, fix permissions:
+sudo usermod -a -G dialout $USER
 ```
 
 ---
@@ -180,7 +267,7 @@ COM7 (Laser Gate)          COM8 (Hub)              Your PC
 
 **Step 1: Start System**
 ```
-Double-click start_all.bat
+Double-click scripts/start_all.bat
 ```
 
 **Step 2: Verify Dashboard**
@@ -213,7 +300,7 @@ Invoke-RestMethod -Uri "http://localhost:8000/api/simulate" -Method Post -Conten
    - Verify COM ports are detected
    
 2. **Start System**
-   - Double-click `start_all.bat`
+   - Double-click `scripts/start_all.bat`
    - Wait for dashboard to load
    
 3. **Test Run**
@@ -254,10 +341,10 @@ Invoke-RestMethod -Uri "http://localhost:8000/api/simulate" -Method Post -Conten
 ## 📞 Quick Support
 
 **Backend won't start?**
-→ Check COM port in python/receiver.py
+→ Check COM port in src/backend/receiver.py
 
 **Frontend won't load?**
-→ Check if npm run dev succeeded
+→ Check if npm run dev succeeded in src/frontend
 
 **No data from gates?**
 → Check laser/receiver alignment first
@@ -269,11 +356,11 @@ Invoke-RestMethod -Uri "http://localhost:8000/api/simulate" -Method Post -Conten
 
 ## 📁 Important Files
 
-- `start_all.bat` - Easy startup (double-click)
-- `start_all.ps1` - Advanced startup (PowerShell)
-- `COMPLETE_SETUP_GUIDE.md` - Full documentation
-- `python/receiver.py` - Backend code (adjust COM port here)
-- `App.tsx` - Frontend code
+- `scripts/start_all.bat` - Easy startup (double-click)
+- `scripts/start_all.ps1` - Advanced startup (PowerShell)
+- [Complete Setup Guide](../guides/COMPLETE_SETUP_GUIDE.md) - Full documentation
+- `src/backend/receiver.py` - Backend code (adjust COM port here)
+- `src/frontend/App.tsx` - Frontend code
 
 ---
 

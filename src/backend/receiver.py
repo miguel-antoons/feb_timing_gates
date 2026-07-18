@@ -27,17 +27,16 @@ BAUD_RATE = int(os.getenv("BAUD_RATE", "115200"))
 
 # --- Models ---
 class TimingEvent(BaseModel):
-    gate_id: int
     gps_s: int
     gps_us: int
-    beam: bool
-    event_id: int
+    event: int
+    mac_address: str
     timestamp: float
 
 # --- Global State ---
 # Using a set for duplicate filtering as per original requirements
-# key: (gate_id, event_id)
-seen_events: Set[Tuple[int, int]] = set()
+# key: (mac_address, event)
+seen_events: Set[Tuple[str, int]] = set()
 
 # --- Connection Manager ---
 class ConnectionManager:
@@ -142,22 +141,21 @@ class SerialReader:
                 time.sleep(5)
 
     def _process_line(self, line: str):
-        # Format: gate_id,gps_s,gps_us,beam,event_id
-        # Example: 1,1708081234,123456,1,42
+        # Format: timestamp_s,timestamp_us,event,mac_address
+        # Example: 1708081234,123456,1,AA:BB:CC:DD:EE:FF
         try:
             parts = line.split(',')
-            if len(parts) != 5:
+            if len(parts) != 4:
                 logger.warning(f"Invalid line format (wrong parts count): {line}")
                 return
 
-            gate_id = int(parts[0])
-            gps_s = int(parts[1])
-            gps_us = int(parts[2])
-            beam = bool(int(parts[3]))
-            event_id = int(parts[4])
+            gps_s = int(parts[0])
+            gps_us = int(parts[1])
+            event = int(parts[2])
+            mac_address = parts[3]
 
             # Duplicate check
-            key = (gate_id, event_id)
+            key = (mac_address, event)
             if key in seen_events:
                 logger.debug(f"Duplicate event ignored: {key}")
                 return
@@ -168,11 +166,10 @@ class SerialReader:
             timestamp = float(gps_s) + (float(gps_us) / 1_000_000.0)
             
             event = TimingEvent(
-                gate_id=gate_id,
                 gps_s=gps_s,
                 gps_us=gps_us,
-                beam=beam,
-                event_id=event_id,
+                event=event,
+                mac_address=mac_address,
                 timestamp=timestamp
             )
 
@@ -267,7 +264,7 @@ async def simulate_event(req: SimulateRequest):
         # Direct broadcast bypass
         await manager.broadcast(req.event)
         # Also simulate "seeing" it to prevent replay if sent again?
-        seen_events.add((req.event.gate_id, req.event.event_id))
+        seen_events.add((req.event.mac_address, req.event.event))
         return {"status": "broadcasted event"}
         
     return {"error": "Provide raw_line or event"}

@@ -14,10 +14,8 @@ const int ERROR_LED_PIN = 8;
 // ESP-NOW message structure (must match sender)
 typedef struct struct_message {
   uint8_t message_type;
-  uint8_t gate_id;
   uint32_t timestamp_s;     // Timestamp in seconds (from GPS)
   uint32_t timestamp_us;    // Microseconds since last second (0-999999)
-  bool beam_broken;
   uint32_t event;
   uint8_t mac_address[6];  // Sender's MAC address for identification
 } struct_message;
@@ -39,17 +37,19 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *receivedData, int len) {
 
   // Only process beam events (ignore identify requests)
   if (msg.message_type == MSG_BEAM_EVENT) {
-    // Format as CSV: gate_id,timestamp_s,timestamp_us,beam_broken,event
-    // beam_broken is sent as 1 or 0
-    Serial.print(msg.gate_id);
-    Serial.print(",");
+    // [timestamp_s],[timestamp_us],[event],[MAC_ADDRESS]
     Serial.print(msg.timestamp_s);
     Serial.print(",");
     Serial.print(msg.timestamp_us);
     Serial.print(",");
-    Serial.print(msg.beam_broken ? 1 : 0);
+    Serial.print(msg.event);
     Serial.print(",");
-    Serial.println(msg.event);
+    // Print MAC address as hex values
+    for (int i = 0; i < 6; i++) {
+      Serial.printf("%02X", msg.mac_address[i]);
+      if (i < 5) Serial.print(":");
+    }
+    Serial.println();
 
     // Blink LED briefly to indicate reception
     digitalWrite(ERROR_LED_PIN, LOW);

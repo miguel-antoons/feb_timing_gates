@@ -26,10 +26,8 @@ unsigned long identifyLedEndTime = 0;
 
 typedef struct struct_message {
   uint8_t message_type;
-  uint8_t gate_id;
   uint32_t timestamp_s;     // Timestamp in seconds (from GPS)
   uint32_t timestamp_us;    // Microseconds since last second (0-999999)
-  bool beam_broken;
   uint32_t event;
   uint8_t mac_address[6];  // Sender's MAC address for identification
 } struct_message;
@@ -192,14 +190,10 @@ void loop() {
     
     // Prepare data for sending
     myData.message_type = MSG_BEAM_EVENT;
-    myData.gate_id = 1;  // Unique ID for this gate
     myData.timestamp_s = seconds;
     myData.timestamp_us = microseconds;
-    myData.beam_broken = beamBroken;
     memcpy(myData.mac_address, localMacAddress, 6);
-    
-    eventCounter++;
-    myData.event = eventCounter;
+    myData.event = ++eventCounter;
     
     // Send data via ESP-NOW
     bool ok = sendWithRetry(&myData, broadcastAddress, 5, 100);

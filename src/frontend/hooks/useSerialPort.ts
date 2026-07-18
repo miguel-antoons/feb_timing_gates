@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface SerialPortEvent {
-    gate_id: number;
     gps_s: number;
     gps_us: number;
-    beam: boolean;
-    event_id: number;
+    event: number;
+    mac_address: string;
 }
 
 interface SerialPortStatus {
@@ -140,21 +139,20 @@ export const useSerialPort = (
     }, [disconnect]);
 
     const processLine = useCallback((line: string) => {
-        // Expected format: gate_id,gps_s,gps_us,beam_broken,event_id
-        // Example: 1,1708081234,123456,1,42
+        // Expected format: timestamp_s,timestamp_us,event,mac_address
+        // Example: 1708081234,123456,1,AA:BB:CC:DD:EE:FF
         try {
             const parts = line.split(',');
-            if (parts.length !== 5) {
+            if (parts.length !== 4) {
                 console.warn('Invalid serial data format:', line);
                 return;
             }
 
             const event: SerialPortEvent = {
-                gate_id: parseInt(parts[0]),
-                gps_s: parseInt(parts[1]),
-                gps_us: parseInt(parts[2]),
-                beam: parseInt(parts[3]) === 1,
-                event_id: parseInt(parts[4])
+                gps_s: parseInt(parts[0]),
+                gps_us: parseInt(parts[1]),
+                event: parseInt(parts[2]),
+                mac_address: parts[3]
             };
 
             onEvent(event);

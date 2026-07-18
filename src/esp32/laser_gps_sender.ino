@@ -22,12 +22,14 @@ typedef struct struct_message {
   uint32_t timestamp_us;    // Microseconds since last second (0-999999)
   bool beam_broken;
   uint32_t event;
+  uint8_t mac_address[6];  // Sender's MAC address for identification
 } struct_message;
 
 struct_message myData;
 esp_now_peer_info_t peerInfo;
 
 uint32_t eventCounter = 0;
+uint8_t localMacAddress[6];
 volatile bool lastSendDone = true;
 volatile bool lastSendOk = false;
 
@@ -65,6 +67,15 @@ void setup() {
   
   // ESP-NOW setup
   WiFi.mode(WIFI_STA);
+  
+  // Get local MAC address
+  esp_read_mac_address(localMacAddress);
+  Serial.print("Local MAC: ");
+  for (int i = 0; i < 6; i++) {
+    Serial.printf("%02X", localMacAddress[i]);
+    if (i < 5) Serial.print(":");
+  }
+  Serial.println();
   
   if (esp_now_init() != ESP_OK) {
     Serial.println("Error initializing ESP-NOW");
@@ -140,6 +151,7 @@ void loop() {
     myData.timestamp_s = seconds;
     myData.timestamp_us = microseconds;
     myData.beam_broken = beamBroken;
+    memcpy(myData.mac_address, localMacAddress, 6);
     
     eventCounter++;
     myData.event = eventCounter;

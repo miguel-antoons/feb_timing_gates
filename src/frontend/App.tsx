@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Header } from './components/Header';
 import { TimerPanel } from './components/TimerPanel';
 import { LapTable } from './components/LapTable';
 import { SessionControls } from './components/SessionControls';
 import { TrapSpeed } from './components/TrapSpeed';
 import { Lap, SessionStatus } from './types';
+import { useSerialPort } from './hooks/useSerialPort';
 
 const App: React.FC = () => {
     // --- State ---
@@ -151,61 +152,32 @@ const App: React.FC = () => {
         return `${minutes}:${seconds.toString().padStart(2, '0')}.${tenThousandths.toString().padStart(4, '0')}`;
     };
 
-    // --- WebSocket Connection ---
-    const handlersRef = useRef({ handleGate1, handleGate2 });
+    // --- Serial Port Connection ---
+    const serialBaudRate = 115200;
+    
+    const handleSerialEvent = useCallback((event: { gate_id: number; gps_s: number; gps_us: number; beam: boolean; event_id: number }) => {
+        // console.log('Serial Event:', event);
+        
+        // Trigger the appropriate handler based on gate_id
+        if (event.gate_id === 1) {
+            handleGate1();
+        } else if (event.gate_id === 2) {
+            handleGate2();
+        }
+    }, [handleGate1, handleGate2]);
 
-    // Keep handlers ref updated
+    const { status: serialStatus, connect: connectSerial, disconnect: disconnectSerial } = useSerialPort(
+        handleSerialEvent,
+        serialBaudRate
+    );
+
+    // Auto-connect when serial API is available (or provide UI to connect)
     useEffect(() => {
-        handlersRef.current = { handleGate1, handleGate2 };
-    });
-
-    useEffect(() => {
-        let ws: WebSocket | null = null;
-        let reconnectTimeout: number | undefined;
-
-        const connect = () => {
-            ws = new WebSocket('ws://localhost:8000/ws/timing');
-
-            ws.onopen = () => {
-                console.log('Connected to Timing Server');
-            };
-
-            ws.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    // console.log('New Timing Event:', data);
-
-                    if (data.gate_id === 1) {
-                        handlersRef.current.handleGate1();
-                    } else if (data.gate_id === 2) {
-                        handlersRef.current.handleGate2();
-                    }
-                } catch (err) {
-                    console.error("Failed to parse websocket message", err);
-                }
-            };
-
-            ws.onclose = () => {
-                // Simple reconnect logic
-                reconnectTimeout = window.setTimeout(connect, 3000);
-            };
-
-            ws.onerror = (err) => {
-                console.warn('WebSocket connection error, retrying...');
-                ws?.close();
-            };
-        };
-
-        connect();
-
-        return () => {
-            if (ws) {
-                ws.onclose = null; // Prevent reconnect on unmount
-                ws.close();
-            }
-            clearTimeout(reconnectTimeout);
-        };
-    }, []);
+        if (serialStatus.isAvailable && !serialStatus.isConnected) {
+            // We won't auto-connect; user needs to click a button due to browser security
+            // This effect is here for future enhancements
+        }
+    }, [serialStatus.isAvailable, serialStatus.isConnected]);
 
     return (
         <div className="bg-background-dark text-text-main font-display overflow-x-hidden min-h-screen flex flex-col selection:bg-primary selection:text-black">
@@ -232,6 +204,9 @@ const App: React.FC = () => {
                                 onStopReset={handleStopReset}
                                 onExport={handleExport}
                                 onGateDistanceChange={setGateDistance}
+                                serialStatus={serialStatus}
+                                onConnectSerial={connectSerial}
+                                onDisconnectSerial={disconnectSerial}
                             />
                             <TrapSpeed lastSpeed={lastTrapSpeed} gateDistance={gateDistance} />
                         </div>

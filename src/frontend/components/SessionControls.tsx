@@ -2,6 +2,13 @@ import React from 'react';
 import { Icon } from './Icon';
 import { SessionStatus } from '../types';
 
+interface SerialPortStatus {
+    isConnected: boolean;
+    isAvailable: boolean;
+    portName: string | null;
+    error: string | null;
+}
+
 interface SessionControlsProps {
     status: SessionStatus;
     gateDistance: number;
@@ -10,6 +17,10 @@ interface SessionControlsProps {
     onStopReset: () => void;
     onExport: () => void;
     onGateDistanceChange: (dist: number) => void;
+    // Serial port props
+    serialStatus?: SerialPortStatus;
+    onConnectSerial?: () => Promise<void>;
+    onDisconnectSerial?: () => Promise<void>;
 }
 
 export const SessionControls: React.FC<SessionControlsProps> = ({ 
@@ -19,7 +30,10 @@ export const SessionControls: React.FC<SessionControlsProps> = ({
     onGate2,
     onStopReset,
     onExport, 
-    onGateDistanceChange 
+    onGateDistanceChange,
+    serialStatus,
+    onConnectSerial,
+    onDisconnectSerial
 }) => {
     const isRunning = status === SessionStatus.RUNNING;
 
@@ -32,6 +46,21 @@ export const SessionControls: React.FC<SessionControlsProps> = ({
                     Track Control
                 </h3>
                 <div className="flex items-center gap-2">
+                    {serialStatus && (
+                        <button
+                            onClick={serialStatus.isConnected ? onDisconnectSerial : onConnectSerial}
+                            disabled={!serialStatus.isAvailable && !serialStatus.isConnected}
+                            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
+                                serialStatus.isConnected
+                                    ? 'bg-primary-dark text-primary border border-primary/30'
+                                    : 'bg-surface-border hover:bg-surface-border/80 text-gray-300 border-surface-border'
+                            }`}
+                            title={!serialStatus.isAvailable ? 'Serial API not available in this browser' : ''}
+                        >
+                            <Icon name="settings_input_component" className="text-xs" />
+                            <span>{serialStatus.isConnected ? 'Connected' : 'Connect'}</span>
+                        </button>
+                    )}
                     <label className="text-[10px] font-bold text-gray-500 uppercase">Dist.</label>
                     <div className="flex items-center bg-surface-border/50 rounded border border-surface-border px-2 py-0.5 hover:border-primary/50 transition-colors">
                         <input 

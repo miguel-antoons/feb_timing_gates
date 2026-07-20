@@ -14,7 +14,7 @@ unsigned long lastGpsSecond = 0;
 
 // ESP-NOW configuration
 const int ERROR_LED_PIN = 8;
-uint8_t broadcastAddress[] = {0x1C, 0xDB, 0xD4, 0x3B, 0xA5, 0xF0};
+uint8_t broadcastAddress[] = {0x1C, 0xDB, 0xD4, 0x3B, 0x90, 0xBC};  // address of the receiver (replace with actual MAC address of the receiver)
 
 // Message types
 #define MSG_BEAM_EVENT 1
@@ -51,7 +51,7 @@ void IRAM_ATTR handlePPS() {
 }
 
 // ESP-NOW callback when data is received
-void OnDataRecv(const uint8_t *mac, const uint8_t *receivedData, int len) {
+void OnDataRecv(const esp_now_recv_info_t *recv_info, const uint8_t *receivedData, int len) {
     if (len != sizeof(struct_message)) {
         Serial.println("Error: Received data size does not match struct_message");
         return;
@@ -110,7 +110,7 @@ void setup() {
     WiFi.mode(WIFI_STA);
     
     // Get local MAC address
-    esp_read_mac_address(localMacAddress);
+    WiFi.macAddress(localMacAddress);
     Serial.print("Local MAC: ");
     for (int i = 0; i < 6; i++) {
         Serial.printf("%02X", localMacAddress[i]);

@@ -72,6 +72,7 @@ export const useSerialPort = (
 
             return true;
         } catch (err) {
+            console.log('Serial connection error:', err);
             const errorMessage = err instanceof Error ? err.message : 'Failed to connect to serial port';
             setStatus(prev => ({ ...prev, error: errorMessage, isConnected: false }));
             return false;
@@ -114,7 +115,8 @@ export const useSerialPort = (
                     break;
                 }
 
-                if (value) {
+              if (value) {
+                    console.log(value)
                     // Accumulate data in buffer
                     bufferRef.current += value;
                     

@@ -25,7 +25,7 @@ struct_message identifyMsg;
 esp_now_peer_info_t peerInfo;
 
 // Callback when data is received via ESP-NOW
-void OnDataRecv(const uint8_t *mac, const uint8_t *receivedData, int len) {
+void OnDataRecv(const esp_now_recv_info_t *recv_info, const uint8_t *receivedData, int len) {
     if (len != sizeof(struct_message)) {
         Serial.println("Error: Received data size does not match struct_message");
         return;
@@ -143,7 +143,7 @@ void setup() {
     
     // Get and print local MAC address
     uint8_t localMac[6];
-    esp_read_mac_address(localMac);
+    WiFi.macAddress(localMac);
     Serial.print("Receiver MAC: ");
     for (int i = 0; i < 6; i++) {
         Serial.printf("%02X", localMac[i]);

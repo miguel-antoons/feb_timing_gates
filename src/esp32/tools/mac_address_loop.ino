@@ -10,12 +10,13 @@ void setup() {
         delay(10);
     }
     Serial.println("ESP32 MAC Address Printer");
+    WiFi.mode(WIFI_STA);
 }
 
 void loop() {
     // Get the ESP32's MAC address
     uint8_t mac[6];
-    esp_read_mac_address(mac);
+    WiFi.macAddress(mac);
     
     // Print the MAC address
     Serial.print("MAC: ");

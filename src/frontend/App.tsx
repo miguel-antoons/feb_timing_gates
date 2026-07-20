@@ -154,10 +154,10 @@ const App: React.FC = () => {
 
     // --- Serial Port Connection ---
     const serialBaudRate = 115200;
-    
+
     const handleSerialEvent = useCallback((event: { gps_s: number; gps_us: number; event: number; mac_address: string }) => {
         // console.log('Serial Event:', event);
-        
+
         // Trigger the appropriate handler based on event field
         // event 1 = gate 1, event 2 = gate 2
         if (event.event === 1) {

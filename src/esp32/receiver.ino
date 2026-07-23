@@ -8,8 +8,20 @@ const unsigned long SERIAL_BAUD = 115200;
 const int ERROR_LED_PIN = 2;
 
 // Message types
-#define MSG_BEAM_EVENT 1
-#define MSG_IDENTIFY_REQUEST 2
+#define BEAM_EVENT 1
+#define IDENTIFY_SENDER_REQUEST 2
+#define ADD_PEER_FAILURE 3
+#define IDENTIFY_REQUEST_SUCCESS 4
+#define IDENTIFY_REQUEST_FAILURE 5
+#define INVALID_MAC_FORMAT 6
+#define RCVD_SIZE_MISMATCH 7
+#define ESP_READY 8
+#define LOCAL_MAC 9
+#define ESP_HELLO 10
+#define ESP_NOW_INIT_FAILURE 11
+#define IDENTIFY_RECEIVER_REQUEST 12
+#define UNKNOWN_MESSAGE_TYPE 13
+#define WRONG_MESSAGE_FORMAT 14
 
 // ESP-NOW message structure (must match sender)
 typedef struct struct_message {
@@ -20,6 +32,37 @@ typedef struct struct_message {
     uint8_t mac_address[6];  // Sender's MAC address for identification
 } struct_message;
 
+// Function to output beam event data to serial
+void outputData(
+    uint8_t message_type,
+    uint32_t timestamp_s,
+    uint32_t timestamp_us,
+    uint32_t event,
+    const uint8_t *mac_address
+) {
+    // [timestamp_s],[timestamp_us],[event],[MAC_ADDRESS]
+    Serial.print(message_type);
+    Serial.print(",");
+    Serial.print(timestamp_s);
+    Serial.print(",");
+    Serial.print(timestamp_us);
+    Serial.print(",");
+    Serial.print(event);
+    Serial.print(",");
+    // Print MAC address as hex values
+    for (int i = 0; i < 6; i++) {
+        Serial.printf("%02X", mac_address[i]);
+        if (i < 5) Serial.print(":");
+    }
+    Serial.println();
+}
+
+void outputMsgCode(uint8_t code) {
+    uint8_t localMac[6];
+    WiFi.macAddress(localMac);
+    return outputData(code, 0, 0, 0, localMac);
+}
+
 // For sending identify requests
 struct_message identifyMsg;
 esp_now_peer_info_t peerInfo;
@@ -27,7 +70,7 @@ esp_now_peer_info_t peerInfo;
 // Callback when data is received via ESP-NOW
 void OnDataRecv(const esp_now_recv_info_t *recv_info, const uint8_t *receivedData, int len) {
     if (len != sizeof(struct_message)) {
-        Serial.println("Error: Received data size does not match struct_message");
+        outputMsgCode(RCVD_SIZE_MISMATCH);
         return;
     }
     
@@ -36,21 +79,10 @@ void OnDataRecv(const esp_now_recv_info_t *recv_info, const uint8_t *receivedDat
     memcpy(&msg, receivedData, sizeof(struct_message));
     
     // Only process beam events (ignore identify requests)
-    if (msg.message_type == MSG_BEAM_EVENT) {
-        // [timestamp_s],[timestamp_us],[event],[MAC_ADDRESS]
-        Serial.print(msg.timestamp_s);
-        Serial.print(",");
-        Serial.print(msg.timestamp_us);
-        Serial.print(",");
-        Serial.print(msg.event);
-        Serial.print(",");
-        // Print MAC address as hex values
-        for (int i = 0; i < 6; i++) {
-            Serial.printf("%02X", msg.mac_address[i]);
-            if (i < 5) Serial.print(":");
-        }
-        Serial.println();
-    
+    if (msg.message_type == BEAM_EVENT) {
+        // Output beam event data
+        outputData(msg.message_type, msg.timestamp_s, msg.timestamp_us, msg.event, msg.mac_address);
+        
         // Blink LED briefly to indicate reception
         digitalWrite(ERROR_LED_PIN, LOW);
         delay(10);
@@ -88,7 +120,7 @@ bool parseMacAddress(const String &macStr, uint8_t *macAddr) {
 // Function to add peer and send identify request
 void sendIdentifyRequest(const uint8_t *targetMac) {
     // Set up the message
-    identifyMsg.message_type = MSG_IDENTIFY_REQUEST;
+    identifyMsg.message_type = IDENTIFY_SENDER_REQUEST;
     memcpy(identifyMsg.mac_address, targetMac, 6);
     
     // Set up peer info
@@ -98,21 +130,16 @@ void sendIdentifyRequest(const uint8_t *targetMac) {
     
     // Add peer
     if (esp_now_add_peer(&peerInfo) != ESP_OK) {
-        Serial.println("Error: Failed to add peer for identify request");
+        outputMsgCode(ADD_PEER_FAILURE);
         return;
     }
     
     // Send the identify request
     esp_err_t result = esp_now_send(targetMac, (uint8_t*)&identifyMsg, sizeof(identifyMsg));
     if (result == ESP_OK) {
-        Serial.print("Identify request sent to: ");
-        for (int i = 0; i < 6; i++) {
-            Serial.printf("%02X", targetMac[i]);
-            if (i < 5) Serial.print(":");
-        }
-        Serial.println();
+        outputData(IDENTIFY_REQUEST_SUCCESS, 0, 0, 0, targetMac);
     } else {
-        Serial.println("Error: Failed to send identify request");
+        outputData(IDENTIFY_REQUEST_FAILURE, 0, 0, 0, targetMac);
     }
 }
 
@@ -122,8 +149,7 @@ void setup() {
     while (!Serial) {
         delay(10);
     }
-    Serial.println("ESP32 Laser GPS Receiver");
-    Serial.println("Waiting for ESP-NOW messages...");
+    outputMsgCode(ESP_HELLO);
     
     // Error LED setup (active LOW for this receiver)
     pinMode(ERROR_LED_PIN, OUTPUT);
@@ -134,49 +160,61 @@ void setup() {
     WiFi.disconnect();
     
     if (esp_now_init() != ESP_OK) {
-        Serial.println("Error initializing ESP-NOW");
+        outputMsgCode(ESP_NOW_INIT_FAILURE);
         digitalWrite(ERROR_LED_PIN, LOW); // LED on to indicate error
         return;
     }
     
     // Register callback for receiving data
     esp_now_register_recv_cb(OnDataRecv);
-    
-    // Get and print local MAC address
-    uint8_t localMac[6];
-    WiFi.macAddress(localMac);
-    Serial.print("Receiver MAC: ");
-    for (int i = 0; i < 6; i++) {
-        Serial.printf("%02X", localMac[i]);
-        if (i < 5) Serial.print(":");
-    }
-    Serial.println();
-    
-    Serial.println("ESP-NOW receiver ready. Waiting for data...");
-    Serial.println("Enter a sender MAC address (format: XX:XX:XX:XX:XX:XX or XXXXXXXXXXXX) to identify it:");
+    outputMsgCode(ESP_READY);
 }
 
+void handleIdentifyRequest(const String &macStr) {
+    uint8_t targetMac[6];
+    if (parseMacAddress(macStr, targetMac)) {
+        sendIdentifyRequest(targetMac);
+    } else {
+        outputMsgCode(INVALID_MAC_FORMAT);
+    }
+}
+
+
+void sendLocalMacAddress() {
+    uint8_t localMac[6];
+    WiFi.macAddress(localMac);
+    outputData(LOCAL_MAC, 0, 0, 0, localMac);
+}
+
+
 void loop() {
-    // Check for serial input (MAC address)
+    // Check for serial input (message)
     if (Serial.available() > 0) {
         String input = Serial.readStringUntil('\n');
         input.trim();
         
         if (input.length() > 0) {
-            uint8_t targetMac[6];
-            if (parseMacAddress(input, targetMac)) {
-                Serial.print("Parsed MAC: ");
-                for (int i = 0; i < 6; i++) {
-                    Serial.printf("%02X", targetMac[i]);
-                    if (i < 5) Serial.print(":");
+            // Check if input is comma-separated
+            int commaPos = input.indexOf(',');
+            
+            if (commaPos != -1) {
+                // Parse message type and MAC address (if present)
+                uint8_t messageType = input.substring(0, commaPos).toInt();
+                String macStr = input.substring(commaPos + 1);
+
+                switch (messageType) {
+                    case IDENTIFY_SENDER_REQUEST:
+                        handleIdentifyRequest(macStr);
+                        break;
+                    case IDENTIFY_RECEIVER_REQUEST:
+                        sendLocalMacAddress();
+                        break;
+                    default:
+                        outputMsgCode(UNKNOWN_MESSAGE_TYPE);
+                        return;
                 }
-                Serial.println();
-                
-                // Send identify request to the target MAC
-                sendIdentifyRequest(targetMac);
             } else {
-                Serial.print("Invalid MAC address format. Please use: XX:XX:XX:XX:XX:XX or XXXXXXXXXXXX. Got: ");
-                Serial.println(input);
+                outputMsgCode(WRONG_MESSAGE_FORMAT);
             }
         }
     }

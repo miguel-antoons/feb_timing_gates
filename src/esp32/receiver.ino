@@ -5,7 +5,7 @@
 const unsigned long SERIAL_BAUD = 115200;
 
 // Error LED configuration
-const int ERROR_LED_PIN = 8;
+const int ERROR_LED_PIN = 2;
 
 // Message types
 #define MSG_BEAM_EVENT 1
@@ -131,6 +131,7 @@ void setup() {
     
     // ESP-NOW setup
     WiFi.mode(WIFI_STA);
+    WiFi.disconnect();
     
     if (esp_now_init() != ESP_OK) {
         Serial.println("Error initializing ESP-NOW");

@@ -5,7 +5,7 @@ const uint8_t SIMULATED_MAC[6] = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
 
 // Serial output configuration
 const unsigned long SERIAL_BAUD = 115200;
-const unsigned long SEND_INTERVAL_MS = 3000;  // 3 seconds
+const unsigned long SEND_INTERVAL_MS = 10000;  // 3 seconds
 
 // Simulation state
 unsigned long lastSendTime = 0;

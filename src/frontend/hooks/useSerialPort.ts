@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface SerialPortEvent {
+    message_type: number;
     gps_s: number;
     gps_us: number;
     event: number;
@@ -12,6 +13,7 @@ interface SerialPortStatus {
     isAvailable: boolean;
     portName: string | null;
     error: string | null;
+    receiverMacAddress: string | null;
 }
 
 export const useSerialPort = (
@@ -22,7 +24,8 @@ export const useSerialPort = (
         isConnected: false,
         isAvailable: false,
         portName: null,
-        error: null
+        error: null,
+        receiverMacAddress: null
     });
     
     const portRef = useRef<SerialPort | null>(null);
@@ -140,24 +143,66 @@ export const useSerialPort = (
         }
     }, [disconnect]);
 
+    // Send a message to the serial port
+    const sendMessage = useCallback(async (messageType: number, macAddress?: string) => {
+        if (!portRef.current || !portRef.current.writable) {
+            console.error('Serial port is not writable');
+            return;
+        }
+        
+        try {
+            const writer = portRef.current.writable.getWriter();
+            let message = `${messageType}`;
+            if (macAddress) {
+                message += `,${macAddress}`;
+            }
+            message += '\n';
+            
+            await writer.write(new TextEncoder().encode(message));
+            writer.releaseLock();
+        } catch (err) {
+            console.error('Failed to send message:', err);
+            setStatus(prev => ({ ...prev, error: err instanceof Error ? err.message : 'Failed to send message' }));
+        }
+    }, []);
+    
+    // Request receiver's MAC address on connection
+    const requestReceiverMac = useCallback(async () => {
+        if (!status.isConnected) return;
+        await sendMessage(MessageType.IDENTIFY_RECEIVER_REQUEST);
+    }, [status.isConnected, sendMessage]);
+    
     const processLine = useCallback((line: string) => {
-        // Expected format: timestamp_s,timestamp_us,event,mac_address
-        // Example: 1708081234,123456,1,AA:BB:CC:DD:EE:FF
+        // Expected format: message_type,gps_s,gps_us,event,mac_address
+        // Example: 1,1708081234,123456,1,AA:BB:CC:DD:EE:FF
         try {
             const parts = line.split(',');
-            if (parts.length !== 4) {
+            if (parts.length < 1) {
                 console.warn('Invalid serial data format:', line);
                 return;
             }
-
-            const event: SerialPortEvent = {
-                gps_s: parseInt(parts[0]),
-                gps_us: parseInt(parts[1]),
-                event: parseInt(parts[2]),
-                mac_address: parts[3]
-            };
-
-            onEvent(event);
+            
+            const messageType = parseInt(parts[0]);
+            
+            // Handle IDENTIFY_RECEIVER_REQUEST response (LOCAL_MAC = 9)
+            if (messageType === 9 && parts.length === 5) { // LOCAL_MAC message
+                const macAddress = parts[4];
+                setStatus(prev => ({ ...prev, receiverMacAddress: macAddress }));
+                return;
+            }
+            
+            // For BEAM_EVENT messages, we need all 5 parts
+            if (messageType === MessageType.BEAM_EVENT && parts.length === 5) {
+                const event: SerialPortEvent = {
+                    message_type: messageType,
+                    gps_s: parseInt(parts[1]),
+                    gps_us: parseInt(parts[2]),
+                    event: parseInt(parts[3]),
+                    mac_address: parts[4]
+                };
+                
+                onEvent(event);
+            }
         } catch (err) {
             console.error('Failed to parse serial line:', line, err);
         }
@@ -173,6 +218,8 @@ export const useSerialPort = (
     return {
         status,
         connect,
-        disconnect
+        disconnect,
+        sendMessage,
+        requestReceiverMac
     };
 };

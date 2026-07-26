@@ -21,9 +21,11 @@ interface SessionControlsProps {
     serialStatus?: SerialPortStatus;
     onConnectSerial?: () => Promise<void>;
     onDisconnectSerial?: () => Promise<void>;
+    onIdentifySender?: (macAddress: string) => void;
+    selectedSender: string | null;
 }
 
-export const SessionControls: React.FC<SessionControlsProps> = ({ 
+export const SessionControls: React.FC<SessionControlsProps> = ({
     status, 
     gateDistance, 
     onGate1,
@@ -33,7 +35,9 @@ export const SessionControls: React.FC<SessionControlsProps> = ({
     onGateDistanceChange,
     serialStatus,
     onConnectSerial,
-    onDisconnectSerial
+    onDisconnectSerial,
+    onIdentifySender = undefined,
+    selectedSender = null
 }) => {
     const isRunning = status === SessionStatus.RUNNING;
 
@@ -124,6 +128,19 @@ export const SessionControls: React.FC<SessionControlsProps> = ({
                     <Icon name="download" className="text-lg" />
                     Export CSV
                 </button>
+            </div>
+            
+            {/* Identify Sender button - hidden for now as requested */}
+            <div className="hidden">
+                {selectedSender && onIdentifySender && (
+                    <button
+                        onClick={() => onIdentifySender(selectedSender)}
+                        className="w-full flex items-center justify-center gap-2 p-3 bg-surface-border hover:bg-surface-border/80 text-yellow-400 rounded-lg transition-all border border-surface-border font-bold uppercase text-[10px] tracking-wider mt-2"
+                    >
+                        <Icon name="search" className="text-lg" />
+                        Identify Sender
+                    </button>
+                )}
             </div>
         </div>
     );

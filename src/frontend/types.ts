@@ -8,6 +8,22 @@ export interface Lap {
     delta: number; // vs best lap
     timestamp: Date;
     isBest?: boolean;
+    senderId?: string; // MAC address of the sender
+}
+
+// Message types from receiver.ino
+export enum MessageType {
+    BEAM_EVENT = 1,
+    IDENTIFY_SENDER_REQUEST = 2,
+    IDENTIFY_RECEIVER_REQUEST = 12
+}
+
+// Sender information
+export interface Sender {
+    macAddress: string;
+    alias: string;
+    lastEventTime?: number; // Timestamp of last event
+    lastEventTimeDiff?: number; // Time difference from previous event
 }
 
 export enum SessionStatus {

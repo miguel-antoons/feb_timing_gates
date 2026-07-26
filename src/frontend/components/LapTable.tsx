@@ -28,6 +28,7 @@ export const LapTable: React.FC<LapTableProps> = ({ laps, gateDistance }) => {
                     <thead className="bg-[#0b101a] sticky top-0 z-10 shadow-sm text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-surface-border">
                         <tr>
                             <th className="p-3 pl-5 text-center w-16">Lap</th>
+                            <th className="p-3 text-left hidden md:table-cell">Sender</th>
                             <th className="p-3 text-right">Time</th>
                             <th className="p-3 text-right hidden sm:table-cell">S1 ({gateDistance}m)</th>
                             <th className="p-3 text-right hidden sm:table-cell">Trap</th>
@@ -52,6 +53,11 @@ export const LapTable: React.FC<LapTableProps> = ({ laps, gateDistance }) => {
                                     <td className="p-3 pl-5 text-center">
                                         <span className={`font-mono font-bold ${isBest ? 'text-primary' : 'text-gray-400'}`}>
                                             {lap.number}
+                                        </span>
+                                    </td>
+                                    <td className="p-3 text-left hidden md:table-cell">
+                                        <span className="font-mono text-gray-400 text-xs">
+                                            {lap.senderId || '-'}
                                         </span>
                                     </td>
                                     <td className="p-3 text-right">

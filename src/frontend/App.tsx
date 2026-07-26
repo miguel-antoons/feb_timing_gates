@@ -4,7 +4,9 @@ import { TimerPanel } from './components/TimerPanel';
 import { LapTable } from './components/LapTable';
 import { SessionControls } from './components/SessionControls';
 import { TrapSpeed } from './components/TrapSpeed';
-import { Lap, SessionStatus } from './types';
+import { SenderList } from './components/SenderList';
+import { EventTable } from './components/EventTable';
+import { Lap, SessionStatus, Sender, MessageType } from './types';
 import { useSerialPort } from './hooks/useSerialPort';
 
 const App: React.FC = () => {
@@ -12,11 +14,23 @@ const App: React.FC = () => {
     const [status, setStatus] = useState<SessionStatus>(SessionStatus.IDLE);
     const [currentTime, setCurrentTime] = useState(0); // The running time for current lap
     const [laps, setLaps] = useState<Lap[]>([]);
+    const [senders, setSenders] = useState<Sender[]>([]);
+    const [events, setEvents] = useState<Array<{
+        timestamp: number;
+        timeDiff: number;
+        event: number;
+        macAddress: string;
+        senderAlias: string;
+    }>>([]);
+    const [selectedSender, setSelectedSender] = useState<string | null>(null);
 
     // Data Capture for current lap
     const [currentSectorTime, setCurrentSectorTime] = useState<number | null>(null); // Time from G1 -> G2
     const [lastTrapSpeed, setLastTrapSpeed] = useState<number | null>(null);
     const [gateDistance, setGateDistance] = useState(75);
+    
+    // Track last event time for each sender
+    const lastEventTimeRef = useRef<Record<string, number>>({});
 
     // Refs
     const lapStartRef = useRef<number | null>(null);
@@ -155,22 +169,79 @@ const App: React.FC = () => {
     // --- Serial Port Connection ---
     const serialBaudRate = 115200;
 
-    const handleSerialEvent = useCallback((event: { gps_s: number; gps_us: number; event: number; mac_address: string }) => {
-        // console.log('Serial Event:', event);
-
-        // Trigger the appropriate handler based on event field
-        // event 1 = gate 1, event 2 = gate 2
-        if (event.event === 1) {
-            handleGate1();
-        } else if (event.event === 2) {
-            handleGate2();
+    // Generate a default alias for a new sender
+    const generateDefaultAlias = (macAddress: string): string => {
+        // Use last 3 bytes of MAC address for uniqueness
+        const parts = macAddress.split(':');
+        if (parts.length >= 3) {
+            return `Sender-${parts.slice(-3).join('')}`;
         }
-    }, [handleGate1, handleGate2]);
+        return `Sender-${Math.floor(Math.random() * 1000)}`;
+    };
+    
+    // Update sender alias
+    const updateSenderAlias = useCallback((macAddress: string, newAlias: string) => {
+        setSenders(prev => prev.map(sender => 
+            sender.macAddress === macAddress ? { ...sender, alias: newAlias } : sender
+        ));
+    }, []);
+    
+    // Handle serial events
+    const handleSerialEvent = useCallback((event: {
+        message_type: number;
+        gps_s: number;
+        gps_us: number;
+        event: number;
+        mac_address: string
+    }) => {
+        // Only process BEAM_EVENT messages
+        if (event.message_type !== MessageType.BEAM_EVENT) return;
+        
+        const timestamp = event.gps_s * 1000000 + event.gps_us;
+        const macAddress = event.mac_address;
+        
+        // Add sender if not already known
+        setSenders(prev => {
+            if (!prev.some(sender => sender.macAddress === macAddress)) {
+                return [...prev, {
+                    macAddress,
+                    alias: generateDefaultAlias(macAddress)
+                }];
+            }
+            return prev;
+        });
+        
+        // Calculate time difference from last event for this sender
+        const lastTime = lastEventTimeRef.current[macAddress] || timestamp;
+        const timeDiff = timestamp - lastTime;
+        lastEventTimeRef.current[macAddress] = timestamp;
+        
+        // Add event to the events list
+        setEvents(prev => [{
+            timestamp,
+            timeDiff,
+            event: event.event,
+            macAddress,
+            senderAlias: senders.find(s => s.macAddress === macAddress)?.alias || generateDefaultAlias(macAddress)
+        }, ...prev.slice(0, 49)]); // Keep last 50 events
+        
+        // If this sender is selected, trigger the appropriate handler
+        if (selectedSender === macAddress) {
+            if (event.event === 1) {
+                handleGate1();
+            } else if (event.event === 2) {
+                handleGate2();
+            }
+        }
+    }, [handleGate1, handleGate2, selectedSender, senders]);
 
-    const { status: serialStatus, connect: connectSerial, disconnect: disconnectSerial } = useSerialPort(
-        handleSerialEvent,
-        serialBaudRate
-    );
+    const {
+        status: serialStatus,
+        connect: connectSerial,
+        disconnect: disconnectSerial,
+        requestReceiverMac,
+        sendMessage
+    } = useSerialPort(handleSerialEvent, serialBaudRate);
 
     // Auto-connect when serial API is available (or provide UI to connect)
     useEffect(() => {
@@ -179,6 +250,13 @@ const App: React.FC = () => {
             // This effect is here for future enhancements
         }
     }, [serialStatus.isAvailable, serialStatus.isConnected]);
+    
+    // Request receiver's MAC address when connected
+    useEffect(() => {
+        if (serialStatus.isConnected) {
+            requestReceiverMac();
+        }
+    }, [serialStatus.isConnected, requestReceiverMac]);
 
     return (
         <div className="bg-background-dark text-text-main font-display overflow-x-hidden min-h-screen flex flex-col selection:bg-primary selection:text-black">
@@ -186,7 +264,17 @@ const App: React.FC = () => {
             <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-[1920px] mx-auto w-full">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
                     {/* Left Column (Main Stats) */}
-                    <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-6 order-1 lg:order-1">
+                    <div className="lg:col-span-3 flex flex-col gap-6 order-1 lg:order-1">
+                        <SenderList
+                            senders={senders}
+                            selectedSender={selectedSender}
+                            onSelectSender={setSelectedSender}
+                            onUpdateAlias={updateSenderAlias}
+                        />
+                    </div>
+                    
+                    {/* Middle Column (Main Stats) */}
+                    <div className="lg:col-span-6 flex flex-col gap-6 order-2 lg:order-2">
                         <TimerPanel
                             status={status}
                             currentTimeMs={currentTime}
@@ -208,14 +296,18 @@ const App: React.FC = () => {
                                 serialStatus={serialStatus}
                                 onConnectSerial={connectSerial}
                                 onDisconnectSerial={disconnectSerial}
+                                selectedSender={selectedSender || null}
+                                onIdentifySender={selectedSender ? (macAddress) => {
+                                    sendMessage(MessageType.IDENTIFY_SENDER_REQUEST, macAddress);
+                                } : undefined}
                             />
                             <TrapSpeed lastSpeed={lastTrapSpeed} gateDistance={gateDistance} />
                         </div>
                     </div>
 
                     {/* Right Column (History) */}
-                    <div className="lg:col-span-5 xl:col-span-4 flex flex-col h-full gap-6 order-2 lg:order-2">
-                        <LapTable laps={laps} gateDistance={gateDistance} />
+                    <div className="lg:col-span-3 flex flex-col h-full gap-6 order-3 lg:order-3">
+                        <EventTable events={events} />
                     </div>
                 </div>
             </main>

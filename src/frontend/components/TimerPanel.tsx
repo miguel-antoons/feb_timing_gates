@@ -9,6 +9,7 @@ interface TimerPanelProps {
     lapNumber: number;
     lastLap: Lap | null;
     bestLap: Lap | null;
+    sectorTimes?: number[]; // Times between gates
 }
 
 export const TimerPanel: React.FC<TimerPanelProps> = ({ 
@@ -32,6 +33,12 @@ export const TimerPanel: React.FC<TimerPanelProps> = ({
     };
 
     const displayTime = formatTime(currentTimeMs);
+    
+    // Format sector times for display
+    const formatSectorTime = (ms: number | undefined | null) => {
+        if (ms === undefined || ms === null) return '--:--.----';
+        return formatTime(ms).main + formatTime(ms).sub;
+    };
 
     const getDeltaColor = (delta: number) => {
         if (delta === 0) return 'text-gray-400';
@@ -75,9 +82,9 @@ export const TimerPanel: React.FC<TimerPanelProps> = ({
                             <Icon name="timer" className="text-black text-xs" filled />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-gray-400 text-[9px] font-bold uppercase tracking-wider leading-none mb-0.5">Trap Split (G1-G2)</span>
+                            <span className="text-gray-400 text-[9px] font-bold uppercase tracking-wider leading-none mb-0.5">Sector 1 Time</span>
                             <span className="text-white font-mono font-bold text-xl leading-none">
-                                {(currentSectorMs / 1000).toFixed(4)}s
+                                {formatSectorTime(currentSectorMs)}
                             </span>
                         </div>
                     </div>
@@ -112,6 +119,21 @@ export const TimerPanel: React.FC<TimerPanelProps> = ({
                     )}
                 </div>
             </div>
+            
+            {/* Lap Speed Section */}
+            {lastLap && lastLap.lapSpeed && (
+                <div className="bg-[#0e1420] border border-surface-border rounded-lg p-3 flex justify-between items-center mt-3">
+                    <div>
+                        <span className="text-gray-500 text-[9px] font-bold uppercase tracking-widest block">Lap Speed</span>
+                        <span className="text-xl font-mono font-bold text-white block">
+                            {lastLap.lapSpeed} km/h
+                        </span>
+                    </div>
+                    <div className="flex items-center justify-center size-8 rounded-full bg-secondary/10 border border-secondary/30">
+                       <Icon name="speed" className="text-secondary text-sm" filled />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

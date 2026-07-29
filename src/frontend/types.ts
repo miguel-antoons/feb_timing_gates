@@ -9,6 +9,8 @@ export interface Lap {
     timestamp: Date;
     isBest?: boolean;
     senderId?: string; // MAC address of the sender
+    sectorTimes?: number[]; // Times between gates for multi-gate support
+    lapSpeed?: number; // Speed for completing the full lap
 }
 
 // Message types from receiver.ino
@@ -24,6 +26,8 @@ export interface Sender {
     alias: string;
     lastEventTime?: number; // Timestamp of last event
     lastEventTimeDiff?: number; // Time difference from previous event
+    order?: number; // Order for drag and drop
+    distanceToNext?: number; // Distance to next gate
 }
 
 export enum SessionStatus {

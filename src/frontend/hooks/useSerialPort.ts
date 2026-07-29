@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
+import { MessageType } from '../types';
+
 interface SerialPortEvent {
     message_type: number;
     gps_s: number;
@@ -192,7 +194,7 @@ export const useSerialPort = (
             }
             
             // For BEAM_EVENT messages, we need all 5 parts
-            if (messageType === MessageType.BEAM_EVENT && parts.length === 5) {
+            if (messageType === 1 && parts.length === 5) {  // BEAM_EVENT = 1
                 const event: SerialPortEvent = {
                     message_type: messageType,
                     gps_s: parseInt(parts[1]),

@@ -3,7 +3,7 @@ import { Header } from './components/Header';
 import { TimerPanel } from './components/TimerPanel';
 import { LapTable } from './components/LapTable';
 import { SessionControls } from './components/SessionControls';
-import { TrapSpeed } from './components/TrapSpeed';
+import { LapSpeed } from './components/TrapSpeed';
 import { SenderList } from './components/SenderList';
 import { EventTable } from './components/EventTable';
 import { Lap, SessionStatus, Sender, MessageType } from './types';
@@ -15,12 +15,14 @@ const App: React.FC = () => {
     const [currentTime, setCurrentTime] = useState(0); // The running time for current lap
     const [laps, setLaps] = useState<Lap[]>([]);
     const [senders, setSenders] = useState<Sender[]>([]);
+    const [manualTriggerEnabled, setManualTriggerEnabled] = useState(false);
     const [events, setEvents] = useState<Array<{
         timestamp: number;
         timeDiff: number;
         event: number;
         macAddress: string;
         senderAlias: string;
+        speed?: number; // Speed between gates
     }>>([]);
     const [selectedSender, setSelectedSender] = useState<string | null>(null);
 
@@ -28,6 +30,7 @@ const App: React.FC = () => {
     const [currentSectorTime, setCurrentSectorTime] = useState<number | null>(null); // Time from G1 -> G2
     const [lastTrapSpeed, setLastTrapSpeed] = useState<number | null>(null);
     const [gateDistance, setGateDistance] = useState(75);
+    const [senderDistances, setSenderDistances] = useState<Record<string, number>>({});
     
     // Track last event time for each sender
     const lastEventTimeRef = useRef<Record<string, number>>({});
@@ -87,6 +90,10 @@ const App: React.FC = () => {
             const currentBest = laps.length > 0 ? Math.min(...laps.map(l => l.timeMs)) : finalLapTime;
             const delta = finalLapTime - currentBest;
 
+            // Calculate lap speed (full lap distance / lap time)
+            const totalLapDistance = senders.length > 1 ? Object.values(senderDistances).reduce((sum: number, dist: number) => sum + dist, 0) : gateDistance;
+            const lapSpeed = totalLapDistance > 0 ? ((totalLapDistance / (finalLapTime / 1000)) * 3.6) : 0;
+
             const newLap: Lap = {
                 number: laps.length + 1,
                 timeMs: finalLapTime,
@@ -94,9 +101,11 @@ const App: React.FC = () => {
                 sector1Ms: currentSectorTime || undefined,
                 sector1: currentSectorTime ? (currentSectorTime / 1000).toFixed(4) : '-',
                 speed: lastTrapSpeed || undefined,
+                lapSpeed: Math.round(lapSpeed),
                 delta: delta,
                 timestamp: new Date(),
-                isBest: finalLapTime <= currentBest
+                isBest: finalLapTime <= currentBest,
+                senderId: selectedSender || undefined
             };
 
             setLaps(prev => {
@@ -121,9 +130,10 @@ const App: React.FC = () => {
 
             setCurrentSectorTime(sectorTime);
 
-            // Calculate Speed
+            // Calculate Speed using the appropriate distance
+            const distance = selectedSender ? (senderDistances[selectedSender] || gateDistance) : gateDistance;
             const timeInSeconds = sectorTime / 1000;
-            const calculatedSpeed = (gateDistance / timeInSeconds) * 3.6;
+            const calculatedSpeed = (distance / timeInSeconds) * 3.6;
             setLastTrapSpeed(Math.round(calculatedSpeed));
         }
     };
@@ -144,6 +154,55 @@ const App: React.FC = () => {
         }
     };
 
+    // Soft reset - keeps previous times but resets current session
+    const handleSoftReset = () => {
+        if (status === SessionStatus.RUNNING) {
+            setStatus(SessionStatus.STOPPED);
+        }
+        setCurrentTime(0);
+        setCurrentSectorTime(null);
+        setLastTrapSpeed(null);
+        lapStartRef.current = null;
+        
+        // Add a clear marker to events
+        setEvents(prev => [{
+            timestamp: performance.now() * 1000, // Convert to microseconds
+            timeDiff: 0,
+            event: 0, // Special event type for clear marker
+            macAddress: 'system',
+            senderAlias: 'System',
+            speed: 0
+        }, ...prev.slice(0, 49)]);
+    };
+
+    // Manual trigger function
+    const handleManualTrigger = () => {
+        if (manualTriggerEnabled) {
+            handleGate1();
+        }
+    };
+
+    // Update sender distance
+    const updateSenderDistance = (macAddress: string, distance: number) => {
+        setSenderDistances(prev => ({
+            ...prev,
+            [macAddress]: distance
+        }));
+        
+        // Also update the sender in the list
+        setSenders(prev => prev.map(sender => 
+            sender.macAddress === macAddress ? { ...sender, distanceToNext: distance } : sender
+        ));
+    };
+
+    // Reorder senders (for drag and drop)
+    const reorderSenders = (newOrder: Sender[]) => {
+        setSenders(newOrder.map((sender, index) => ({
+            ...sender,
+            order: index
+        })));
+    };
+
     const handleExport = () => {
         const headers = "Lap,Time,S1_Time,Speed_kmh,Delta,Timestamp\n";
         const rows = laps.map(l =>
@@ -155,6 +214,20 @@ const App: React.FC = () => {
         const a = document.createElement('a');
         a.href = url;
         a.download = `FEB_timing_${new Date().toISOString()}.csv`;
+        a.click();
+    };
+
+    const handleExportEvents = () => {
+        const headers = "Timestamp,TimeDiff,Event,MacAddress,SenderAlias,Speed_kmh\n";
+        const rows = events.map(e =>
+            `${new Date(Math.floor(e.timestamp / 1000)).toISOString()},${(e.timeDiff / 1000000).toFixed(6)},${e.event},${e.macAddress},${e.senderAlias},${e.speed || 0}`
+        ).join("\n");
+
+        const blob = new Blob([headers + rows], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `FEB_events_${new Date().toISOString()}.csv`;
         a.click();
     };
 
@@ -205,7 +278,8 @@ const App: React.FC = () => {
             if (!prev.some(sender => sender.macAddress === macAddress)) {
                 return [...prev, {
                     macAddress,
-                    alias: generateDefaultAlias(macAddress)
+                    alias: generateDefaultAlias(macAddress),
+                    order: prev.length
                 }];
             }
             return prev;
@@ -216,13 +290,18 @@ const App: React.FC = () => {
         const timeDiff = timestamp - lastTime;
         lastEventTimeRef.current[macAddress] = timestamp;
         
+        // Calculate speed if we have a distance for this sender
+        const distance = senderDistances[macAddress] || gateDistance;
+        const speed = timeDiff > 0 ? ((distance / (timeDiff / 1000000)) * 3.6) : 0;
+        
         // Add event to the events list
         setEvents(prev => [{
             timestamp,
             timeDiff,
             event: event.event,
             macAddress,
-            senderAlias: senders.find(s => s.macAddress === macAddress)?.alias || generateDefaultAlias(macAddress)
+            senderAlias: senders.find(s => s.macAddress === macAddress)?.alias || generateDefaultAlias(macAddress),
+            speed: speed
         }, ...prev.slice(0, 49)]); // Keep last 50 events
         
         // If this sender is selected, trigger the appropriate handler
@@ -233,7 +312,7 @@ const App: React.FC = () => {
                 handleGate2();
             }
         }
-    }, [handleGate1, handleGate2, selectedSender, senders]);
+    }, [handleGate1, handleGate2, selectedSender, senders, senderDistances, gateDistance]);
 
     const {
         status: serialStatus,
@@ -270,6 +349,8 @@ const App: React.FC = () => {
                             selectedSender={selectedSender}
                             onSelectSender={setSelectedSender}
                             onUpdateAlias={updateSenderAlias}
+                            onUpdateDistance={updateSenderDistance}
+                            onReorder={reorderSenders}
                         />
                     </div>
                     
@@ -282,17 +363,19 @@ const App: React.FC = () => {
                             lapNumber={currentLapNumber}
                             lastLap={lastLap}
                             bestLap={bestLap}
+                            sectorTimes={[]} // Placeholder for future multi-gate support
                         />
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <SessionControls
                                 status={status}
-                                gateDistance={gateDistance}
-                                onGate1={handleGate1}
-                                onGate2={handleGate2}
                                 onStopReset={handleStopReset}
+                                onSoftReset={handleSoftReset}
                                 onExport={handleExport}
-                                onGateDistanceChange={setGateDistance}
+                                onExportEvents={handleExportEvents}
+                                onManualTrigger={handleManualTrigger}
+                                manualTriggerEnabled={manualTriggerEnabled}
+                                onToggleManualTrigger={() => setManualTriggerEnabled(!manualTriggerEnabled)}
                                 serialStatus={serialStatus}
                                 onConnectSerial={connectSerial}
                                 onDisconnectSerial={disconnectSerial}
@@ -301,7 +384,7 @@ const App: React.FC = () => {
                                     sendMessage(MessageType.IDENTIFY_SENDER_REQUEST, macAddress);
                                 } : undefined}
                             />
-                            <TrapSpeed lastSpeed={lastTrapSpeed} gateDistance={gateDistance} />
+                            <LapSpeed lastSpeed={lastTrapSpeed} gateDistance={gateDistance} lapSpeed={lastLap?.lapSpeed || null} />
                         </div>
                     </div>
 

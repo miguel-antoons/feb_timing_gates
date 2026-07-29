@@ -1,18 +1,19 @@
 import React from 'react';
 import { Icon } from './Icon';
 
-interface TrapSpeedProps {
+interface LapSpeedProps {
     lastSpeed: number | null;
     gateDistance: number;
+    lapSpeed?: number | null;
 }
 
-export const TrapSpeed: React.FC<TrapSpeedProps> = ({ lastSpeed, gateDistance }) => {
+export const LapSpeed: React.FC<LapSpeedProps> = ({ lastSpeed, gateDistance, lapSpeed }) => {
     return (
         <div className="bg-surface-dark rounded-xl shadow-sm border border-surface-border p-5 flex flex-col justify-between h-full min-h-[140px]">
             <div className="flex justify-between items-start">
                 <h3 className="text-gray-400 font-bold text-xs uppercase tracking-wider flex items-center gap-2">
                     <Icon name="speed" className="text-sm" />
-                    Trap Speed ({gateDistance}m)
+                    Sector Speed ({gateDistance}m)
                 </h3>
             </div>
             

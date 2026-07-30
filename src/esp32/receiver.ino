@@ -26,7 +26,7 @@ const int ERROR_LED_PIN = 2;
 // ESP-NOW message structure (must match sender)
 typedef struct struct_message {
     uint8_t message_type;
-    uint32_t timestamp_s;     // Timestamp in seconds (from GPS)
+    uint32_t timestamp_s;     // Unix Epoch Seconds
     uint32_t timestamp_us;    // Microseconds since last second (0-999999)
     uint32_t event;
     uint8_t mac_address[6];  // Sender's MAC address for identification

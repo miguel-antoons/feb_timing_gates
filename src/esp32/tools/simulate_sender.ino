@@ -15,7 +15,7 @@ HardwareSerial gpsSerial(1);
 uint32_t last_utc_epoch = 0;
 uint64_t base_pps_anchor_us = 0;
 bool time_is_synchronized = false;
-TinyGPSPlus gps;
+
 
 
 // ESP-NOW configuration
@@ -106,15 +106,27 @@ void readGPS() {
     while (gpsSerial.available()) {
         char c = gpsSerial.read();
         if (gps.encode(c)) {
-            if (gps.time.isUpdated() && gps.date.isValid() && pps_occurred) {
-                noInterrupts();
-                uint64_t captured_pps = lastPpsTime;
-                pps_occurred = false;
-                interrupts();
+            if (gps.time.isUpdated() && gps.date.isValid()) {
+                bool had_pps = false;
+                uint64_t captured_pps = 0;
+                
+                portENTER_CRITICAL(&timerMux);
+                if (pps_occurred) {
+                    captured_pps = lastPpsTime;
+                    pps_occurred = false;
+                    had_pps = true;
+                }
+                portEXIT_CRITICAL(&timerMux);
 
-                last_utc_epoch = getEpochSeconds(gps.date, gps.time);
-                base_pps_anchor_us = captured_pps;
-                time_is_synchronized = true;
+                if (had_pps) {
+                    uint32_t parsed_epoch = getEpochSeconds(gps.date, gps.time);
+                    
+                    portENTER_CRITICAL(&timerMux);
+                    last_utc_epoch = parsed_epoch;
+                    base_pps_anchor_us = captured_pps;
+                    time_is_synchronized = true;
+                    portEXIT_CRITICAL(&timerMux);
+                }
             }
         }
     }
@@ -135,7 +147,7 @@ bool initGPSSerial() {
 
 
 bool initPPS() {
-    pinMode(PPS_PIN, INPUT);
+    pinMode(PPS_PIN, INPUT_PULLDOWN);
     attachInterrupt(digitalPinToInterrupt(PPS_PIN), handlePPS, RISING);
     Serial.println("GPS 1PPS detector started on GPIO" + String(PPS_PIN));
     return true;
@@ -150,17 +162,14 @@ bool initESPNow() {
     // Disable Wi-Fi sleep
     esp_wifi_set_ps(WIFI_PS_NONE);
     
-    // Lock strictly to channel 1
-    esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE);
-    
     // Get local MAC address
     WiFi.macAddress(localMacAddress);
     Serial.print("Local MAC: ");
-    for (int i = 0; i < 6; i++) {
-        Serial.printf("%02X", localMacAddress[i]);
-        if (i < 5) Serial.print(":");
-    }
-    Serial.println();
+    Serial.printf(
+        "Local MAC: %02X:%02X:%02X:%02X:%02X:%02X\n", 
+        localMacAddress[0], localMacAddress[1], localMacAddress[2], 
+        localMacAddress[3], localMacAddress[4], localMacAddress[5]
+    );
     
     if (esp_now_init() != ESP_OK) {
         Serial.println("Error initializing ESP-NOW");
@@ -175,13 +184,14 @@ bool initESPNow() {
     
     // Register peer
     memcpy(peerInfo.peer_addr, broadcastAddress, 6);
-    peerInfo.channel = 1;      // Ensure this matches the channel we set above
+    peerInfo.channel = 0;
     peerInfo.encrypt = false;
     
     if (esp_now_add_peer(&peerInfo) != ESP_OK) {
         Serial.println("Failed to add peer");
         return false;
     }
+    
     Serial.println("ESP-NOW initialized and ready");
     return true;
 }

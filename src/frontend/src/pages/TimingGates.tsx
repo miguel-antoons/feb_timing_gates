@@ -8,7 +8,6 @@ import { SessionControls } from '../panes/SessionControls';
 import { LapSpeed } from '../components/TrapSpeed';
 import { EventTable } from '../panes/EventTable';
 
-
 export const TimingGates: React.FC = () => {
   // --- State ---
   const [status, setStatus] = useState<SessionStatus>(SessionStatus.IDLE);
@@ -180,7 +179,7 @@ export const TimingGates: React.FC = () => {
     if (manualTriggerEnabled) {
       const now = performance.now();
       const timestamp = now * 1000; // Convert to microseconds for consistency
-        
+      
       // Log the manual trigger event (event: 3, senderAlias: "Manual Trigger")
       setEvents(prev => [{
         timestamp,
@@ -190,7 +189,7 @@ export const TimingGates: React.FC = () => {
         senderAlias: 'Manual Trigger',
         speed: undefined // Speed is unknown for manual triggers
       }, ...prev.slice(0, 49)]); // Keep last 50 events
-        
+      
       handleGate1();
     }
   };
@@ -366,7 +365,7 @@ export const TimingGates: React.FC = () => {
               onReorder={reorderSenders}
             />
           </div>
-                
+          
           {/* Middle Column (Main Stats) */}
           <div className="lg:col-span-6 flex flex-col gap-6 order-2 lg:order-2">
             <TimerPanel

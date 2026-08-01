@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Header } from '../components/Header';
 import { SenderList } from '../panes/SenderList';
 import { TimerPanel } from '../components/TimerPanel';
-import { SessionControls } from '../components/SessionControls';
+import { SessionControls } from '../panes/SessionControls';
 import { LapSpeed } from '../components/TrapSpeed';
 import { EventTable } from '../panes/EventTable';
 

@@ -178,6 +178,19 @@ const App: React.FC = () => {
     // Manual trigger function
     const handleManualTrigger = () => {
         if (manualTriggerEnabled) {
+            const now = performance.now();
+            const timestamp = now * 1000; // Convert to microseconds for consistency
+            
+            // Log the manual trigger event (event: 3, senderAlias: "Manual Trigger")
+            setEvents(prev => [{
+                timestamp,
+                timeDiff: 0, // No time difference for manual triggers
+                event: 3, // Distinct event type for manual triggers
+                macAddress: 'manual',
+                senderAlias: 'Manual Trigger',
+                speed: undefined // Speed is unknown for manual triggers
+            }, ...prev.slice(0, 49)]); // Keep last 50 events
+            
             handleGate1();
         }
     };

@@ -28,8 +28,9 @@ export const EventTable: React.FC<EventTableProps> = ({ events }) => {
     };
     
     // Get gate name
-    const getGateName = (event: number) => {
+    const getGateName = (event: number, senderAlias: string) => {
         if (event === 0) return '--- Clear Marker ---';
+        if (event === 3) return senderAlias; // Use senderAlias for manual triggers
         return event === 1 ? 'Gate 1' : event === 2 ? 'Gate 2' : 'Unknown';
     };
     
@@ -57,9 +58,9 @@ export const EventTable: React.FC<EventTableProps> = ({ events }) => {
                             events.map((event, index) => (
                                 <tr key={index} className={`border-t border-background-dark ${event.event === 0 ? 'bg-yellow-900/20' : ''}`}>
                                     <td className="p-2">{formatTimestamp(event.timestamp)}</td>
-                                    <td className="p-2">{event.senderAlias}</td>
+                                    <td className="p-2">{getGateName(event.event, event.senderAlias)}</td>
                                     <td className="p-2">{event.event === 0 ? '-' : formatTimeDiff(event.timeDiff)}</td>
-                                    <td className="p-2">{event.event === 0 ? '-' : (event.speed ? `${event.speed.toFixed(1)} km/h` : '-')}</td>
+                                    <td className="p-2">{event.event === 0 || event.event === 3 ? '-' : (event.speed ? `${event.speed.toFixed(1)} km/h` : '-')}</td>
                                 </tr>
                             ))
                         )}

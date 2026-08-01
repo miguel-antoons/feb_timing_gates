@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-import { MessageType } from '../types';
+import { MessageType } from '../src/types';
 
 interface SerialPortEvent {
     message_type: number;

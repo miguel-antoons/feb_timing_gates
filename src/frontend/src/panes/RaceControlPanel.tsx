@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Icon } from './Icon';
-import { RaceStatus } from '../types';
+import { Icon } from '../components/Icon';
+import { RaceStatus } from '@/src/types';
 
 export const RaceControlPanel: React.FC = () => {
     const [status, setStatus] = useState<RaceStatus>(RaceStatus.GREEN);

@@ -13,7 +13,26 @@ export const TimingGates: React.FC = () => {
   const [status, setStatus] = useState<SessionStatus>(SessionStatus.IDLE);
   const [currentTime, setCurrentTime] = useState(0); // The running time for current lap
   const [laps, setLaps] = useState<Lap[]>([]);
-  const [senders, setSenders] = useState<Sender[]>([]);
+  // Generate a default alias for a new sender
+  const generateDefaultAlias = (macAddress: string): string => {
+    // Use last 3 bytes of MAC address for uniqueness
+    const parts = macAddress.split(':');
+    if (parts.length >= 3) {
+      return `Gate-${parts.slice(-3).join('')}`;
+    }
+    return `Gate-${Math.floor(Math.random() * 1000)}`;
+  };
+  
+  const createDefaultSender = (macAddress: string): Sender => ({
+    macAddress,
+    alias: generateDefaultAlias(macAddress),
+    distanceToNext: 0 // Default distance
+  });
+
+  const [senders, setSenders] = useState<Sender[]>([
+    createDefaultSender('00:11:22:33:44:55'),
+    createDefaultSender('66:77:88:99:AA:BB')
+  ]);
   const [manualTriggerEnabled, setManualTriggerEnabled] = useState(false);
   const [events, setEvents] = useState<Array<{
     timestamp: number;
@@ -195,16 +214,12 @@ export const TimingGates: React.FC = () => {
   };
 
   // Update sender distance
-  const updateSenderDistance = (macAddress: string, distance: number) => {
-    setSenderDistances(prev => ({
-      ...prev,
-      [macAddress]: distance
-    }));
-    
-    // Also update the sender in the list
-    setSenders(prev => prev.map(sender =>
-      sender.macAddress === macAddress ? { ...sender, distanceToNext: distance } : sender
-    ));
+  const updateSenderDistance = (senderId: number, distance: number) => {
+    setSenders(prevSenders =>
+      prevSenders.map((sender, index) =>
+        index === senderId ? { ...sender, distanceToNext: distance } : sender
+      )
+    );
   };
 
   // Reorder senders (for drag and drop)
@@ -254,20 +269,11 @@ export const TimingGates: React.FC = () => {
   // --- Serial Port Connection ---
   const serialBaudRate = 115200;
 
-  // Generate a default alias for a new sender
-  const generateDefaultAlias = (macAddress: string): string => {
-    // Use last 3 bytes of MAC address for uniqueness
-    const parts = macAddress.split(':');
-    if (parts.length >= 3) {
-      return `Sender-${parts.slice(-3).join('')}`;
-    }
-    return `Sender-${Math.floor(Math.random() * 1000)}`;
-  };
 
   // Update sender alias
-  const updateSenderAlias = useCallback((macAddress: string, newAlias: string) => {
-    setSenders(prev => prev.map(sender =>
-      sender.macAddress === macAddress ? { ...sender, alias: newAlias } : sender
+  const updateSenderAlias = useCallback((senderId: number, newAlias: string) => {
+    setSenders(prev => prev.map((sender, index) =>
+      index === senderId ? { ...sender, alias: newAlias } : sender
     ));
   }, []);
 
@@ -358,8 +364,6 @@ export const TimingGates: React.FC = () => {
           <div className="lg:col-span-3 flex flex-col gap-6 order-1 lg:order-1">
             <SenderList
               senders={senders}
-              selectedSender={selectedSender}
-              onSelectSender={setSelectedSender}
               onUpdateAlias={updateSenderAlias}
               onUpdateDistance={updateSenderDistance}
               onReorder={reorderSenders}

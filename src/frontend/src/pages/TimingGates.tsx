@@ -1,4 +1,4 @@
-import { useSerialPort } from '@/hooks/useSerialPort';
+import { useSerialPort } from '@/src/hooks/useSerialPort';
 import { Lap, MessageType, Sender, SessionStatus } from '@/src/types';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Header } from '../components/Header';

@@ -35,13 +35,30 @@ export const TimingGates: React.FC = () => {
   ]);
   const [manualTriggerEnabled, setManualTriggerEnabled] = useState(false);
   const [events, setEvents] = useState<Array<{
+    sessionId: number;
     timestamp: number;
     timeDiff: number;
-    event: number;
     macAddress: string;
     senderAlias: string;
     speed?: number; // Speed between gates
-  }>>([]);
+  }>>([
+    {
+      sessionId: 1,
+      timestamp: Date.now() - 5000,
+      timeDiff: 0,
+      macAddress: "00:1A:2B:3C:4D:5E",
+      senderAlias: "Gate 1",
+      speed: undefined
+    },
+    {
+      sessionId: 1,
+      timestamp: Date.now() - 3000,
+      timeDiff: 2000,
+      macAddress: "00:1A:2B:3C:4D:5F",
+      senderAlias: "Gate 2",
+      speed: 5.2
+    }
+  ]);
   const [selectedSender, setSelectedSender] = useState<string | null>(null);
 
   // Data Capture for current lap

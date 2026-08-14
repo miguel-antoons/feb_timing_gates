@@ -3,16 +3,16 @@ import { Lap, MessageType, Sender, SessionStatus } from '@/src/types';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Header } from '../components/Header';
 import { SenderList } from '../panes/SenderList';
-import { TimerPanel } from '../components/TimerPanel';
-import { SessionControls } from '../panes/SessionControls';
-import { LapSpeed } from '../components/TrapSpeed';
-import { EventTable } from '../panes/EventTable';
+import { EventsPane } from '../panes/EventsPane';
 
 export const TimingGates: React.FC = () => {
   // --- State ---
+  const [currentSessionId, setCurrentSessionId] = useState(1);
   const [status, setStatus] = useState<SessionStatus>(SessionStatus.IDLE);
   const [currentTime, setCurrentTime] = useState(0); // The running time for current lap
   const [laps, setLaps] = useState<Lap[]>([]);
+  
+  
   // Generate a default alias for a new sender
   const generateDefaultAlias = (macAddress: string): string => {
     // Use last 3 bytes of MAC address for uniqueness
@@ -40,25 +40,8 @@ export const TimingGates: React.FC = () => {
     timeDiff: number;
     macAddress: string;
     senderAlias: string;
-    speed?: number; // Speed between gates
-  }>>([
-    {
-      sessionId: 1,
-      timestamp: Date.now() - 5000,
-      timeDiff: 0,
-      macAddress: "00:1A:2B:3C:4D:5E",
-      senderAlias: "Gate 1",
-      speed: undefined
-    },
-    {
-      sessionId: 1,
-      timestamp: Date.now() - 3000,
-      timeDiff: 2000,
-      macAddress: "00:1A:2B:3C:4D:5F",
-      senderAlias: "Gate 2",
-      speed: 5.2
-    }
-  ]);
+    speed: number; // Speed between gates
+  }>>([]);
   const [selectedSender, setSelectedSender] = useState<string | null>(null);
 
   // Data Capture for current lap
@@ -79,6 +62,18 @@ export const TimingGates: React.FC = () => {
   const bestLap = laps.length > 0 ? laps.reduce((prev, curr) => (prev.timeMs < curr.timeMs ? prev : curr)) : null;
   const lastLap = laps.length > 0 ? laps[laps.length - 1] : null;
 
+  
+  const createNewSession = () => {
+    setCurrentSessionId(currentSessionId + 1);
+  }
+
+
+  const resetAll = () => {
+    setCurrentSessionId(1);
+    setEvents([]);
+  }
+
+  
   // --- Animation Loop ---
   const animate = () => {
     if (status === SessionStatus.RUNNING && lapStartRef.current !== null) {
@@ -173,61 +168,26 @@ export const TimingGates: React.FC = () => {
     }
   };
 
-  // Stop / Reset Button
-  const handleStopReset = () => {
-    if (status === SessionStatus.RUNNING) {
-      // STOP
-      setStatus(SessionStatus.STOPPED);
-    } else {
-      // RESET
-      setStatus(SessionStatus.IDLE);
-      setLaps([]);
-      setCurrentTime(0);
-      setCurrentSectorTime(null);
-      setLastTrapSpeed(null);
-      lapStartRef.current = null;
-    }
-  };
-
-  // Soft reset - keeps previous times but resets current session
-  const handleSoftReset = () => {
-    if (status === SessionStatus.RUNNING) {
-      setStatus(SessionStatus.STOPPED);
-    }
-    setCurrentTime(0);
-    setCurrentSectorTime(null);
-    setLastTrapSpeed(null);
-    lapStartRef.current = null;
-    
-    // Add a clear marker to events
-    setEvents(prev => [{
-      timestamp: performance.now() * 1000, // Convert to microseconds
-      timeDiff: 0,
-      event: 0, // Special event type for clear marker
-      macAddress: 'system',
-      senderAlias: 'System',
-      speed: 0
-    }, ...prev.slice(0, 49)]);
-  };
 
   // Manual trigger function
   const handleManualTrigger = () => {
-    if (manualTriggerEnabled) {
-      const now = performance.now();
-      const timestamp = now * 1000; // Convert to microseconds for consistency
-      
-      // Log the manual trigger event (event: 3, senderAlias: "Manual Trigger")
-      setEvents(prev => [{
-        timestamp,
-        timeDiff: 0, // No time difference for manual triggers
-        event: 3, // Distinct event type for manual triggers
-        macAddress: 'manual',
-        senderAlias: 'Manual Trigger',
-        speed: undefined // Speed is unknown for manual triggers
-      }, ...prev.slice(0, 49)]); // Keep last 50 events
-      
-      handleGate1();
+    const timestamp = Date.now(); // Convert to microseconds for consistency
+    let timeDiff = 0;
+    if (events.length > 0) {
+      timeDiff = timestamp - events[0].timestamp
     }
+    
+    // Log the manual trigger event (event: 3, senderAlias: "Manual Trigger")
+    setEvents(prev => [{
+      sessionId: currentSessionId,
+      timestamp,
+      timeDiff, // No time difference for manual triggers
+      macAddress: '-',
+      senderAlias: 'Manual Trigger',
+      speed: 0 // Speed is unknown for manual triggers
+    }, ...prev]); // Keep last 50 events
+      
+      // handleGate1();
   };
 
   // Update sender distance
@@ -239,41 +199,6 @@ export const TimingGates: React.FC = () => {
     );
   };
 
-  // Reorder senders (for drag and drop)
-  const reorderSenders = (newOrder: Sender[]) => {
-    setSenders(newOrder.map((sender, index) => ({
-      ...sender,
-      order: index
-    })));
-  };
-
-  const handleExport = () => {
-    const headers = "Lap,Time,S1_Time,Speed_kmh,Delta,Timestamp\n";
-    const rows = laps.map(l =>
-      `${l.number},${l.formattedTime},${l.sector1},${l.speed || 0},${(l.delta / 1000).toFixed(4)},${l.timestamp.toISOString()}`
-    ).join("\n");
-
-    const blob = new Blob([headers + rows], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `FEB_timing_${new Date().toISOString()}.csv`;
-    a.click();
-  };
-
-  const handleExportEvents = () => {
-    const headers = "Timestamp,TimeDiff,Event,MacAddress,SenderAlias,Speed_kmh\n";
-    const rows = events.map(e =>
-      `${new Date(Math.floor(e.timestamp / 1000)).toISOString()},${(e.timeDiff / 1000000).toFixed(6)},${e.event},${e.macAddress},${e.senderAlias},${e.speed || 0}`
-    ).join("\n");
-
-    const blob = new Blob([headers + rows], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `FEB_events_${new Date().toISOString()}.csv`;
-    a.click();
-  };
 
   const formatMs = (ms: number) => {
     const minutes = Math.floor(ms / 60000);
@@ -378,52 +303,24 @@ export const TimingGates: React.FC = () => {
       <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-[1920px] mx-auto w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
           {/* Left Column (Main Stats) */}
-          <div className="lg:col-span-3 flex flex-col gap-6 order-1 lg:order-1">
+          <div className="2xl:col-span-3 lg:col-span-4 flex flex-col gap-6 order-1 lg:order-1">
             <SenderList
               senders={senders}
               onUpdateAlias={updateSenderAlias}
               onUpdateDistance={updateSenderDistance}
-              onReorder={reorderSenders}
+              serialStatus={serialStatus}
+              onDisconnectSerial={disconnectSerial}
+              onConnectSerial={connectSerial}
             />
           </div>
-          
-          {/* Middle Column (Main Stats) */}
-          <div className="lg:col-span-6 flex flex-col gap-6 order-2 lg:order-2">
-            <TimerPanel
-              status={status}
-              currentTimeMs={currentTime}
-              currentSectorMs={currentSectorTime}
-              lapNumber={currentLapNumber}
-              lastLap={lastLap}
-              bestLap={bestLap}
-              sectorTimes={[]} // Placeholder for future multi-gate support
+
+          <div className="2xl:col-span-9 lg:col-span-8 flex flex-col h-full gap-6 order-2 lg:order-2">
+            <EventsPane
+              events={events}
+              createNewSession={createNewSession}
+              resetAll={resetAll}
+              handleTrigger={handleManualTrigger}
             />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <SessionControls
-                status={status}
-                onStopReset={handleStopReset}
-                onSoftReset={handleSoftReset}
-                onExport={handleExport}
-                onExportEvents={handleExportEvents}
-                onManualTrigger={handleManualTrigger}
-                manualTriggerEnabled={manualTriggerEnabled}
-                onToggleManualTrigger={() => setManualTriggerEnabled(!manualTriggerEnabled)}
-                serialStatus={serialStatus}
-                onConnectSerial={connectSerial}
-                onDisconnectSerial={disconnectSerial}
-                selectedSender={selectedSender || null}
-                onIdentifySender={selectedSender ? (macAddress) => {
-                  sendMessage(MessageType.IDENTIFY_SENDER_REQUEST, macAddress);
-                } : undefined}
-              />
-              <LapSpeed lastSpeed={lastTrapSpeed} gateDistance={gateDistance} lapSpeed={lastLap?.lapSpeed || null} />
-            </div>
-          </div>
-
-          {/* Right Column (History) */}
-          <div className="lg:col-span-3 flex flex-col h-full gap-6 order-3 lg:order-3">
-            <EventTable events={events} />
           </div>
         </div>
       </main>

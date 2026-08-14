@@ -49,7 +49,7 @@ body {
   outline: none;
   min-height: 60px;
   width: 100%;
-  max-width: 320px;
+  max-width: 400px;
   white-space: nowrap;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -112,7 +112,7 @@ body {
   flex-shrink: 0;
 }
 
-.green-primary-input:focus {
+/*.green-primary-input:focus {
     border-color: #74FA81 !important;
     box-shadow: 0 0 0 1px #74FA81 !important;
-}
+}*/

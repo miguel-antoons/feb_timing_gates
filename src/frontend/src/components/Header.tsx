@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Icon } from './Icon';
+import { Gear } from '@gravity-ui/icons';
+import { Button } from '@heroui/react';
 
 export const Header: React.FC = () => {
   const [time, setTime] = useState(new Date());
@@ -52,9 +53,9 @@ export const Header: React.FC = () => {
           </p>
         </div>
         <div className="h-8 w-[1px] bg-surface-border hidden sm:block"></div>
-        <button className="flex size-10 cursor-pointer items-center justify-center rounded-full bg-surface-border hover:bg-primary-dark hover:text-white transition-colors text-gray-400">
-          <Icon name="settings" className="text-[20px]" />
-        </button>
+        <Button isIconOnly size='lg' className=" bg-surface-border hover:bg-primary-dark hover:text-white transition-colors text-gray-400">
+          <Gear className="size-6" />
+        </Button>
       </div>
     </header>
   );

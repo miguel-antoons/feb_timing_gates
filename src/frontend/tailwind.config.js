@@ -6,11 +6,13 @@ export default {
     extend: {
       colors: {
         "primary": "#74FA81",
+        "primary-hover": "#35F849",
         "primary-dark": "#084C3E",
         "primary-glow": "rgba(116, 250, 129, 0.5)",
         "secondary": "#757083",
         "background-dark": "#020408",
         "surface-dark": "#0b101a",
+        "surface-new": "#111729",
         "surface-border": "#1e2636",
         "text-main": "#ffffff",
         "text-muted": "#94a3b8",

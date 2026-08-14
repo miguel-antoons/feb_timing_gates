@@ -28,15 +28,15 @@ export const SenderElement: React.FC<SenderProps> = ({id, index, onUpdateAlias, 
       </div>
       <div className="ml-auto pr-2">
         <ButtonGroup>
-          <Button isIconOnly variant="tertiary" onClick={() => console.log(`Clicked sender ${id}`)}><BroadcastSignal /></Button>
+          <Button isIconOnly className="transition-all font-bold bg-surface-border text-primary hover:bg-primary hover:text-surface-border" onClick={() => console.log(`Clicked sender ${id}`)}><BroadcastSignal /></Button>
           <Modal>
-            <Button isIconOnly className="bg-primary-dark hover:bg-[#0B6A57]" onClick={() => console.log(`Clicked sender ${id}`)}><PencilToLine /></Button>
+            <Button isIconOnly className="transition-all font-bold  bg-primary hover:bg-surface-border hover:text-primary text-surface-border" onClick={() => console.log(`Clicked sender ${id}`)}><PencilToLine /></Button>
             <Modal.Backdrop>
               <Modal.Container placement="auto">
                 <Modal.Dialog className="sm:max-w-md bg-surface-dark">
-                  <Modal.CloseTrigger />
+                  <Modal.CloseTrigger className="transition-all font-bold  bg-primary hover:bg-surface-border hover:text-primary text-surface-border" />
                   <Modal.Header>
-                    <Modal.Icon className="bg-primary-dark">
+                    <Modal.Icon className="bg-primary text-surface-border">
                       <PencilToLine className="size-5" />
                     </Modal.Icon>
                     <Modal.Heading>Edit Gate {sender.macAddress}</Modal.Heading>
@@ -60,7 +60,7 @@ export const SenderElement: React.FC<SenderProps> = ({id, index, onUpdateAlias, 
                     </Surface>
                   </Modal.Body>
                   <Modal.Footer>
-                    <Button slot="close" className="bg-primary-dark hover:bg-[#0B6A57]">Done</Button>
+                    <Button slot="close" className="transition-all font-bold  bg-primary hover:bg-surface-border hover:text-primary text-surface-border">Done</Button>
                   </Modal.Footer>
                 </Modal.Dialog>
               </Modal.Container>

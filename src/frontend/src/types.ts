@@ -24,10 +24,17 @@ export enum MessageType {
 export interface Sender {
     macAddress: string;
     alias: string;
-    // lastEventTime?: number; // Timestamp of last event
-    // lastEventTimeDiff?: number; // Time difference from previous event
-    // order?: number; // Order for drag and drop
-    distanceToNext: number; // Distance to next gate
+    distanceToPrevious: number; // Distance to next gate
+}
+
+
+export interface TimingEvent {
+    sessionId: number;
+    timestamp: number; // in ms
+    timeDiff: number; // in ms
+    macAddress: string;
+    senderAlias: string;
+    speed: number; // in kph
 }
 
 export enum SessionStatus {

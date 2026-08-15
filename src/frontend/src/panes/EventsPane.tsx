@@ -2,18 +2,10 @@ import React from 'react';
 import { TimingTable } from '../components/TimingTable';
 import { SessionControls } from '../components/SessionControls';
 import { Clock } from '@gravity-ui/icons';
-
-interface Event {
-  sessionId: number;
-  timestamp: number;
-  timeDiff: number;
-  macAddress: string;
-  senderAlias: string;
-  speed: number;
-}
+import { TimingEvent } from '../types';
 
 interface EventTableProps {
-  events: Event[];
+  events: TimingEvent[];
   createNewSession: () => void;
   resetAll: () => void;
   handleTrigger: () => void;

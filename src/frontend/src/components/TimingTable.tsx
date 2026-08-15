@@ -1,18 +1,11 @@
 "use client";
-import { Clock, Moon, Tray } from "@gravity-ui/icons";
+import { Moon } from "@gravity-ui/icons";
 import { EmptyState, Table } from "@heroui/react";
+import { TimingEvent } from "../types";
 
-interface Event {
-  sessionId: number;
-  timestamp: number;
-  timeDiff: number;
-  macAddress: string;
-  senderAlias: string;
-  speed?: number;
-}
 
 interface TimingTableProps {
-  events: Event[];
+  events: TimingEvent[];
 }
 
 

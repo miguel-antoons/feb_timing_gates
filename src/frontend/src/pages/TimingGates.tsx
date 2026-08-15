@@ -1,15 +1,22 @@
 import { useSerialPort } from '@/src/hooks/useSerialPort';
-import { Lap, MessageType, Sender, SessionStatus } from '@/src/types';
+import { Lap, MessageType, Sender, SessionStatus, TimingEvent } from '@/src/types';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Header } from '../components/Header';
 import { SenderList } from '../panes/SenderList';
 import { EventsPane } from '../panes/EventsPane';
 import { toast, ToastProvider } from '@heroui/react';
-import { CircleCheck, Persons } from '@gravity-ui/icons';
+import { CircleCheck } from '@gravity-ui/icons';
 
 export const TimingGates: React.FC = () => {
   // --- State ---
-  const [currentSessionId, setCurrentSessionId] = useState(1);
+  const [currentSessionId, setCurrentSessionId] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedSessionId = localStorage.getItem('timingGatesSessionId');
+      console.log('Loaded session ID from localStorage:', savedSessionId);
+      return savedSessionId ? parseInt(savedSessionId, 10) : 1;
+    }
+    return 1;
+  });
   const [status, setStatus] = useState<SessionStatus>(SessionStatus.IDLE);
   const [currentTime, setCurrentTime] = useState(0); // The running time for current lap
   const [laps, setLaps] = useState<Lap[]>([]);
@@ -28,7 +35,7 @@ export const TimingGates: React.FC = () => {
   const createDefaultSender = (macAddress: string): Sender => ({
     macAddress,
     alias: generateDefaultAlias(macAddress),
-    distanceToNext: 0 // Default distance
+    distanceToPrevious: 1 // Default distance
   });
 
   const [senders, setSenders] = useState<Sender[]>([
@@ -36,14 +43,14 @@ export const TimingGates: React.FC = () => {
     createDefaultSender('66:77:88:99:AA:BB')
   ]);
   const [manualTriggerEnabled, setManualTriggerEnabled] = useState(false);
-  const [events, setEvents] = useState<Array<{
-    sessionId: number;
-    timestamp: number;
-    timeDiff: number;
-    macAddress: string;
-    senderAlias: string;
-    speed: number; // Speed between gates
-  }>>([]);
+  const [events, setEvents] = useState<TimingEvent[]>(() => {
+    // Load events from localStorage on initial render
+    if (typeof window !== 'undefined') {
+      const savedEvents = localStorage.getItem('timingGatesEvents');
+      return savedEvents ? JSON.parse(savedEvents) : [];
+    }
+    return [];
+  });
   const [selectedSender, setSelectedSender] = useState<string | null>(null);
 
   // Data Capture for current lap
@@ -59,14 +66,14 @@ export const TimingGates: React.FC = () => {
   const lapStartRef = useRef<number | null>(null);
   const requestRef = useRef<number | null>(null);
 
-  // Derived Stats
-  const currentLapNumber = laps.length + 1;
-  const bestLap = laps.length > 0 ? laps.reduce((prev, curr) => (prev.timeMs < curr.timeMs ? prev : curr)) : null;
-  const lastLap = laps.length > 0 ? laps[laps.length - 1] : null;
-
   
   const createNewSession = () => {
-    setCurrentSessionId(currentSessionId + 1);
+    setCurrentSessionId(() => {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('timingGatesSessionId', JSON.stringify(currentSessionId + 1));
+      }
+      return currentSessionId + 1
+    });
     toast("New session created", {
       indicator: <CircleCheck />,
       variant: "success",
@@ -77,6 +84,11 @@ export const TimingGates: React.FC = () => {
   const resetAll = () => {
     setCurrentSessionId(1);
     setEvents([]);
+    // Clear events from localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('timingGatesEvents');
+      localStorage.removeItem('timingGatesSessionId');
+    }
   }
 
   
@@ -175,6 +187,17 @@ export const TimingGates: React.FC = () => {
   };
 
 
+  const updateEvents = (newEvent: TimingEvent) => {
+    setEvents(prev => {
+      const updatedEvents = [newEvent, ...prev]; // Keep last 50 events
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('timingGatesEvents', JSON.stringify(updatedEvents));
+      }
+      return updatedEvents;
+    });
+  }
+
+
   // Manual trigger function
   const handleManualTrigger = () => {
     const timestamp = Date.now(); // Convert to microseconds for consistency
@@ -184,16 +207,14 @@ export const TimingGates: React.FC = () => {
     }
     
     // Log the manual trigger event (event: 3, senderAlias: "Manual Trigger")
-    setEvents(prev => [{
+    updateEvents({
       sessionId: currentSessionId,
       timestamp,
       timeDiff, // No time difference for manual triggers
       macAddress: '-',
       senderAlias: 'Manual Trigger',
       speed: 0 // Speed is unknown for manual triggers
-    }, ...prev]); // Keep last 50 events
-      
-      // handleGate1();
+    });
   };
 
   // Update sender distance
@@ -245,7 +266,7 @@ export const TimingGates: React.FC = () => {
         return [...prev, {
           macAddress,
           alias: generateDefaultAlias(macAddress),
-          order: prev.length
+          distanceToPrevious: 1,
         }];
       }
       return prev;
@@ -261,14 +282,14 @@ export const TimingGates: React.FC = () => {
     const speed = timeDiff > 0 ? ((distance / (timeDiff / 1000000)) * 3.6) : 0;
     
     // Add event to the events list
-    setEvents(prev => [{
+    updateEvents({
+      sessionId: currentSessionId,
       timestamp,
       timeDiff,
-      event: event.event,
       macAddress,
-      senderAlias: senders.find(s => s.macAddress === macAddress)?.alias || generateDefaultAlias(macAddress),
+      senderAlias: senders.find(s => s.macAddress === macAddress)?.alias || 'Unknown',
       speed: speed
-    }, ...prev.slice(0, 49)]); // Keep last 50 events
+    });
     
     // If this sender is selected, trigger the appropriate handler
     if (selectedSender === macAddress) {

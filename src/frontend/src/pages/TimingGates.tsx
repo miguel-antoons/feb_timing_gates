@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Header } from '../components/Header';
 import { SenderList } from '../panes/SenderList';
 import { EventsPane } from '../panes/EventsPane';
+import { toast, ToastProvider } from '@heroui/react';
+import { CircleCheck, Persons } from '@gravity-ui/icons';
 
 export const TimingGates: React.FC = () => {
   // --- State ---
@@ -65,6 +67,10 @@ export const TimingGates: React.FC = () => {
   
   const createNewSession = () => {
     setCurrentSessionId(currentSessionId + 1);
+    toast("New session created", {
+      indicator: <CircleCheck />,
+      variant: "success",
+    });
   }
 
 
@@ -299,6 +305,7 @@ export const TimingGates: React.FC = () => {
 
   return (
     <div className="bg-background-dark text-text-main font-display overflow-x-hidden min-h-screen flex flex-col selection:bg-primary selection:text-black">
+      <ToastProvider />
       <Header />
       <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-[1920px] mx-auto w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">

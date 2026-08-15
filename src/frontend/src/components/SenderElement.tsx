@@ -23,7 +23,7 @@ export const SenderElement: React.FC<SenderProps> = ({id, index, onUpdateAlias, 
       <div className="flex-1 px-2 min-w-0">
         <div className="truncate">
           <span>{sender.alias}</span><br />
-          <span className="truncate block text-gray-500 text-xs italic">{sender.macAddress} - {sender.distanceToNext} m</span>
+          <span className="truncate block text-gray-500 text-xs italic">{sender.macAddress} - {sender.distanceToPrevious} m</span>
         </div>
       </div>
       <div className="ml-auto pr-2">

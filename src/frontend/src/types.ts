@@ -21,3 +21,20 @@ export interface TimingEvent {
     senderAlias: string;
     speed: number; // in kph
 }
+
+
+export interface SerialPortEvent {
+  message_type: number;
+  gps_s: number;
+  gps_us: number;
+  event: number;
+  mac_address: string;
+}
+
+export interface SerialPortStatus {
+  isConnected: boolean;
+  isAvailable: boolean;
+  portName: string | null;
+  error: string | null;
+  receiverMacAddress: string | null;
+}

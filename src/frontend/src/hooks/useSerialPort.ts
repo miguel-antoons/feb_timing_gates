@@ -1,22 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-import { MessageType } from '../types';
+import { MessageType, SerialPortEvent, SerialPortStatus } from '../types';
 
-interface SerialPortEvent {
-    message_type: number;
-    gps_s: number;
-    gps_us: number;
-    event: number;
-    mac_address: string;
-}
-
-interface SerialPortStatus {
-    isConnected: boolean;
-    isAvailable: boolean;
-    portName: string | null;
-    error: string | null;
-    receiverMacAddress: string | null;
-}
 
 export const useSerialPort = (
     onEvent: (event: SerialPortEvent) => void,
@@ -59,10 +44,11 @@ export const useSerialPort = (
             }
 
             setStatus({
-                isConnected: true,
-                isAvailable: true,
-                portName: portRef.current.getInfo().usbProductName || portRef.current.getInfo().usbVendorName || null,
-                error: null
+              isConnected: true,
+              isAvailable: true,
+              portName: portRef.current.getInfo().usbProductName || portRef.current.getInfo().usbVendorName || null,
+              error: null,
+              receiverMacAddress: null
             });
 
             // Create a text decoder stream

@@ -17,6 +17,7 @@ export const useSerialPort = (
     
     const portRef = useRef<SerialPort | null>(null);
     const readerRef = useRef<ReadableStreamDefaultReader<string> | null>(null);
+    const readableStreamClosedRef = useRef<Promise<void> | null>(null);
     const bufferRef = useRef<string>('');
 
     // Check if Web Serial API is available
@@ -53,7 +54,7 @@ export const useSerialPort = (
 
             // Create a text decoder stream
             const textDecoder = new TextDecoderStream();
-            const readableStream = portRef.current.readable.pipeTo(textDecoder.writable);
+            readableStreamClosedRef.current = portRef.current.readable.pipeTo(textDecoder.writable);
             
             // Get the reader
             readerRef.current = textDecoder.readable.getReader();
@@ -80,11 +81,21 @@ export const useSerialPort = (
             readerRef.current = null;
         }
 
+        if (readableStreamClosedRef.current) {
+            try {
+                await readableStreamClosedRef.current;
+            } catch {
+                // This will likely throw an AbortError when we cancel the reader above, 
+                // which is completely normal. We just need to catch and ignore it.
+            }
+            readableStreamClosedRef.current = null;
+        }
+
         if (portRef.current) {
             try {
                 await portRef.current.close();
-            } catch {
-                // Ignore close errors
+            } catch (err) {
+                console.error('Failed to close port:', err);
             }
             portRef.current = null;
         }

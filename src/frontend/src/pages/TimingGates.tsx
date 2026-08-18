@@ -6,7 +6,7 @@ import { SenderList } from '../panes/SenderList';
 import { EventsPane } from '../panes/EventsPane';
 import { toast, ToastProvider } from '@heroui/react';
 import { CircleCheck } from '@gravity-ui/icons';
-import { createDefaultSender, generateDefaultAlias } from '../utils/senders';
+import { generateDefaultAlias } from '../utils/senders';
 
 export const TimingGates: React.FC = () => {
   // --- State ---
@@ -27,11 +27,14 @@ export const TimingGates: React.FC = () => {
     }
     return [];
   });
+  const [latestEvents, setLatestEvents] = useState<{}>({});
   const sendersRef = useRef(senders);
   const eventsRef = useRef(events);
+  const latestEventsRef = useRef(latestEvents);
 
   useEffect(() => { sendersRef.current = senders; }, [senders]);
   useEffect(() => { eventsRef.current = events; }, [events]);
+  useEffect(() => { latestEventsRef.current = latestEvents; }, [latestEvents]);
 
   
   const createNewSession = () => {
@@ -93,7 +96,7 @@ export const TimingGates: React.FC = () => {
   const updateSenderDistance = (senderId: number, distance: number) => {
     setSenders(prevSenders =>
       prevSenders.map((sender, index) =>
-        index === senderId ? { ...sender, distanceToNext: distance } : sender
+        index === senderId ? { ...sender, distanceToPrevious: distance } : sender
       )
     );
   };
@@ -136,8 +139,25 @@ export const TimingGates: React.FC = () => {
         distanceToPrevious: 1, // Default distance
       }]);
 
+      setLatestEvents(prev => ({
+        ...prev,
+        [macAddress]: event.event,
+      }));
+
       return;
     }
+
+    const latestEventForSender = latestEventsRef.current[macAddress];
+    if (latestEventForSender >= event.event) {
+      // Duplicate event for the same sender. Ignore it.
+      console.warn(`Duplicate event for sender ${macAddress}. Ignoring.`);
+      return;
+    }
+
+    setLatestEvents(prev => ({
+      ...prev,
+      [macAddress]: event.event,
+    }));
 
     let timeDiff = 0;
     if (currentEvents.length > 0) {
@@ -146,7 +166,7 @@ export const TimingGates: React.FC = () => {
     
     const distanceToPrevious = existingSender.distanceToPrevious;
     const speed = timeDiff > 0 && distanceToPrevious > 0 
-      ? ((distanceToPrevious / (timeDiff / 1000000)) * 3.6) 
+      ? ((distanceToPrevious / (timeDiff / 1000)) * 3.6) 
       : 0;
   
     updateEvents({
@@ -155,7 +175,7 @@ export const TimingGates: React.FC = () => {
       timeDiff,
       macAddress,
       senderAlias: existingSender.alias,
-      speed,
+      speed: Math.round(speed * 1000) / 1000,
     });
   }, [currentSessionId, updateEvents]);
 

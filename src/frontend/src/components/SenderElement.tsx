@@ -54,7 +54,7 @@ export const SenderElement: React.FC<SenderProps> = ({id, index, onUpdateAlias, 
                         </TextField>
                         <TextField className="w-full bg-surface-dark" name="distanceToPrevious" type="number" variant="secondary">
                           <Label>Distance to Previous Gate (m)</Label>
-                          <Input className="green-primary-input bg-surface-border" type="number" min="0" placeholder="Enter the Distance in Meters" value={sender.distanceToNext} onChange={(e) => onUpdateDistance(id, Number(e.target.value))} />
+                          <Input className="green-primary-input bg-surface-border" type="number" min="0" placeholder="Enter the Distance in Meters" value={sender.distanceToPrevious} onChange={(e) => onUpdateDistance(id, Number(e.target.value))} />
                         </TextField>
                       </form>
                     </Surface>

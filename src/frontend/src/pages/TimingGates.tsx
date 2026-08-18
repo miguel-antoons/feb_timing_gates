@@ -1,6 +1,6 @@
 import { useSerialPort } from '@/src/hooks/useSerialPort';
 import { MessageType, Sender, TimingEvent } from '@/src/types';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Header } from '../components/Header';
 import { SenderList } from '../panes/SenderList';
 import { EventsPane } from '../panes/EventsPane';
@@ -18,10 +18,7 @@ export const TimingGates: React.FC = () => {
     return 1;
   });
 
-  const [senders, setSenders] = useState<Sender[]>([
-    createDefaultSender('00:11:22:33:44:55'),
-    createDefaultSender('66:77:88:99:AA:BB')
-  ]);
+  const [senders, setSenders] = useState<Sender[]>([]);
   const [events, setEvents] = useState<TimingEvent[]>(() => {
     // Load events from localStorage on initial render
     if (typeof window !== 'undefined') {
@@ -30,6 +27,11 @@ export const TimingGates: React.FC = () => {
     }
     return [];
   });
+  const sendersRef = useRef(senders);
+  const eventsRef = useRef(events);
+
+  useEffect(() => { sendersRef.current = senders; }, [senders]);
+  useEffect(() => { eventsRef.current = events; }, [events]);
 
   
   const createNewSession = () => {
@@ -59,7 +61,7 @@ export const TimingGates: React.FC = () => {
 
   const updateEvents = (newEvent: TimingEvent) => {
     setEvents(prev => {
-      const updatedEvents = [newEvent, ...prev]; // Keep last 50 events
+      const updatedEvents = [newEvent, ...prev];
       if (typeof window !== 'undefined') {
         localStorage.setItem('timingGatesEvents', JSON.stringify(updatedEvents));
       }
@@ -118,48 +120,44 @@ export const TimingGates: React.FC = () => {
     // Only process BEAM_EVENT messages
     if (event.message_type !== MessageType.BEAM_EVENT) return;
     
-    const timestamp = event.gps_s * 1000000 + event.gps_us;
+    const timestamp = event.gps_s * 1000 + Math.floor(event.gps_us / 1000);
     const macAddress = event.mac_address;
-    
-    // Add sender if not already known
-    setSenders(prev => {
-      if (!prev.some(sender => sender.macAddress === macAddress)) {
-        return [...prev, {
-          macAddress,
-          alias: generateDefaultAlias(macAddress),
-          distanceToPrevious: 1,
-        }];
-      }
-      return prev;
-    });
 
-    // find the sender's index
-    const senderIndex = senders.findIndex(s => s.macAddress === macAddress);
-    if (senderIndex === -1) {
-      console.warn(`Unknown sender MAC address: ${macAddress}`);
+    const currentSenders = sendersRef.current;
+    const currentEvents = eventsRef.current;
+
+    const existingSender = currentSenders.find(sender => sender.macAddress === macAddress);
+
+    if (!existingSender) {
+      // Sender is unknown. Add them to the state.
+      setSenders(prev => [...prev, {
+        macAddress,
+        alias: generateDefaultAlias(macAddress),
+        distanceToPrevious: 1, // Default distance
+      }]);
+
       return;
     }
-    
-    // Calculate time difference from last event for this sender
+
     let timeDiff = 0;
-    if (events.length > 0) {
-      timeDiff = timestamp - events[0].timestamp
+    if (currentEvents.length > 0) {
+      timeDiff = timestamp - currentEvents[0].timestamp;
     }
     
-    // Calculate speed if we have a distance for this sender
-    const distance = senders[senderIndex].distanceToPrevious;
-    const speed = timeDiff > 0 && distance > 0 ? ((distance / (timeDiff / 1000000)) * 3.6) : 0;
-    
-    // Add event to the events list
+    const distanceToPrevious = existingSender.distanceToPrevious;
+    const speed = timeDiff > 0 && distanceToPrevious > 0 
+      ? ((distanceToPrevious / (timeDiff / 1000000)) * 3.6) 
+      : 0;
+  
     updateEvents({
       sessionId: currentSessionId,
       timestamp,
       timeDiff,
       macAddress,
-      senderAlias: senders.find(s => s.macAddress === macAddress)?.alias || 'Unknown',
-      speed: speed
+      senderAlias: existingSender.alias,
+      speed,
     });
-  }, [senders, events]);
+  }, [currentSessionId, updateEvents]);
 
   const {
     status: serialStatus,

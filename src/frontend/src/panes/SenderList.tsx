@@ -79,5 +79,9 @@ export const SenderList: React.FC<SenderListProps> = (
 };
 
 function createRange(length: number) {
-  return Array.from({length}, (_, i) => i);
+  let res = [];
+  for (let i = 0; i < length + 1; i++) {
+    res.push(i);
+  }
+  return res;
 }

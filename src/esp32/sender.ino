@@ -30,7 +30,7 @@
 
 // delays
 #define IDENTIFY_LED_DURATION 3000 // 3 seconds
-#define SEND_INTERVAL_MS 3000 // 3 seconds
+#define SEND_INTERVAL_MS 1000 // 3 seconds
 
 // GPS variables
 HardwareSerial gpsSerial(1);

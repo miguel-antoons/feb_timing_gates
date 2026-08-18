@@ -1,5 +1,5 @@
 import { useSerialPort } from '@/src/hooks/useSerialPort';
-import { MessageType, Sender, TimingEvent } from '@/src/types';
+import { LatestEvents, MessageType, Sender, TimingEvent } from '@/src/types';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Header } from '../components/Header';
 import { SenderList } from '../panes/SenderList';
@@ -27,7 +27,7 @@ export const TimingGates: React.FC = () => {
     }
     return [];
   });
-  const [latestEvents, setLatestEvents] = useState<{}>({});
+  const [latestEvents, setLatestEvents] = useState<LatestEvents>({});
   const sendersRef = useRef(senders);
   const eventsRef = useRef(events);
   const latestEventsRef = useRef(latestEvents);

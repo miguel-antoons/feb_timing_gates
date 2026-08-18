@@ -38,3 +38,7 @@ export interface SerialPortStatus {
   error: string | null;
   receiverMacAddress: string | null;
 }
+
+export interface LatestEvents {
+  [macAddress: string]: number;
+}

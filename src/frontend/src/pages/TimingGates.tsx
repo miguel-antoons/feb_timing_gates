@@ -64,7 +64,7 @@ export const TimingGates: React.FC = () => {
 
   const updateEvents = (newEvent: TimingEvent) => {
     setEvents(prev => {
-      const updatedEvents = [newEvent, ...prev];
+      const updatedEvents = [...prev, newEvent].sort((a, b) => a.timestamp - b.timestamp);
       if (typeof window !== 'undefined') {
         localStorage.setItem('timingGatesEvents', JSON.stringify(updatedEvents));
       }

@@ -3,6 +3,8 @@ import { TimingTable } from '../components/TimingTable';
 import { SessionControls } from '../components/SessionControls';
 import { Clock } from '@gravity-ui/icons';
 import { TimingEvent } from '../types';
+import { save } from '@tauri-apps/plugin-dialog';
+import { writeTextFile } from '@tauri-apps/plugin-fs';
 
 interface EventTableProps {
   events: TimingEvent[];
@@ -13,19 +15,32 @@ interface EventTableProps {
 
 export const EventsPane: React.FC<EventTableProps> = ({ events, createNewSession, resetAll, handleTrigger }) => {
 
-  const handleExport = () => {
+  const handleExport = async () => {
     const headers = "SessionId,GateAlias,Timestamp_ms,TimeDiff_ms_,Speed_kmh,MacAddress\n";
     const rows = [...events].reverse().map(e =>
       `${e.sessionId},${e.senderAlias},${e.timestamp},${e.timeDiff},${e.speed},${e.macAddress}`
     ).join("\n");
-
-    const blob = new Blob([headers + rows], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `FEB_events_${new Date().toISOString()}.csv`;
-    a.click();
-  }
+    
+    const csvContent = headers + rows;
+  
+    try {
+      // 1. Open a "Save As" dialog
+      const filePath = await save({
+        filters: [{
+          name: 'CSV File',
+          extensions: ['csv']
+        }],
+        defaultPath: `FEB_events_${new Date().toISOString().replace(/:/g, '-')}.csv` 
+      });
+  
+      if (filePath) {
+        await writeTextFile(filePath, csvContent);
+        console.log("File saved successfully to:", filePath);
+      }
+    } catch (error) {
+      console.error("Failed to save file:", error);
+    }
+  };
   
   return (
     <div className="bg-panel-dark rounded-lg p-4 shadow-lg flex flex-col h-full">

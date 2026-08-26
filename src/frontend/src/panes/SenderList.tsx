@@ -1,16 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { Sender } from '../types';
+import { Sender, SerialPortStatus } from '../types';
 import { SenderElement } from '../components/SenderElement';
 import { DragDropProvider } from '@dnd-kit/react';
 import {move} from '@dnd-kit/helpers';
-import { Eye, Sliders } from '@gravity-ui/icons';
-
-interface SerialPortStatus {
-  isConnected: boolean;
-  isAvailable: boolean;
-  portName: string | null;
-  error: string | null;
-}
+import { Eye } from '@gravity-ui/icons';
+import { ConnectButton } from '../components/ConnectButton';
 
 
 interface SenderListProps {
@@ -19,7 +13,7 @@ interface SenderListProps {
   onUpdateDistance: (senderId: number, distance: number) => void;
   serialStatus: SerialPortStatus;
   onDisconnectSerial: () => void;
-  onConnectSerial: () => void;
+  onConnectSerial: (port: string) => void;
 }
 
 export const SenderList: React.FC<SenderListProps> = (
@@ -33,23 +27,7 @@ export const SenderList: React.FC<SenderListProps> = (
     <div className="bg-panel-dark rounded-lg p-4 shadow-lg max-w-108">
       <div className="flex items-center justify-between mb-0">
         <h2 className="text-xl font-bold mb-4 text-text-main flex items-center gap-2"><Eye className="size-5" />Gates</h2>
-        <div className="flex items-center gap-2">
-          {serialStatus && (
-            <button
-              onClick={serialStatus.isConnected ? onDisconnectSerial : onConnectSerial}
-              disabled={!serialStatus.isAvailable && !serialStatus.isConnected}
-              className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
-                serialStatus.isConnected
-                  ? 'bg-primary-dark text-primary border border-primary/30'
-                  : 'bg-surface-border hover:bg-surface-border/80 text-gray-300 border-surface-border'
-              }`}
-              title={!serialStatus.isAvailable ? 'Serial API not available in this browser' : ''}
-            >
-              <Sliders />
-              <span>{serialStatus.isConnected ? 'Connected' : 'Connect'}</span>
-            </button>
-          )}
-      </div>
+        <ConnectButton serialStatus={serialStatus} onConnectSerial={onConnectSerial} onDisconnectSerial={onDisconnectSerial} />
       </div>
       <DragDropProvider
         onDragEnd={(event) => {

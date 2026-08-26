@@ -30,7 +30,7 @@ export const SenderElement: React.FC<SenderProps> = ({id, index, onUpdateAlias, 
         <ButtonGroup>
           <Button isIconOnly className="transition-all font-bold bg-surface-border text-primary hover:bg-primary hover:text-surface-border" onClick={() => console.log(`Clicked sender ${id}`)}><BroadcastSignal /></Button>
           <Modal>
-            <Button isIconOnly className="transition-all font-bold  bg-primary hover:bg-surface-border hover:text-primary text-surface-border" onClick={() => console.log(`Clicked sender ${id}`)}><PencilToLine /></Button>
+            <Button isIconOnly className="transition-all font-bold  bg-primary hover:bg-surface-border hover:text-primary text-surface-border"><PencilToLine /></Button>
             <Modal.Backdrop>
               <Modal.Container placement="auto">
                 <Modal.Dialog className="sm:max-w-md bg-surface-dark">

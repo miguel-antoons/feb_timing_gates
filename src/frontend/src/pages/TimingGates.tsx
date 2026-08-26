@@ -4,9 +4,11 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Header } from '../components/Header';
 import { SenderList } from '../panes/SenderList';
 import { EventsPane } from '../panes/EventsPane';
-import { toast, ToastProvider } from '@heroui/react';
-import { CircleCheck } from '@gravity-ui/icons';
 import { generateDefaultAlias } from '../utils/senders';
+import { Toaster } from 'sonner';
+import { toast } from 'sonner';
+import { CircleCheck } from '@gravity-ui/icons';
+
 
 export const TimingGates: React.FC = () => {
   // --- State ---
@@ -31,22 +33,28 @@ export const TimingGates: React.FC = () => {
   const sendersRef = useRef(senders);
   const eventsRef = useRef(events);
   const latestEventsRef = useRef(latestEvents);
+  const sessionIdRef = useRef(currentSessionId);
 
   useEffect(() => { sendersRef.current = senders; }, [senders]);
   useEffect(() => { eventsRef.current = events; }, [events]);
   useEffect(() => { latestEventsRef.current = latestEvents; }, [latestEvents]);
+  useEffect(() => { sessionIdRef.current = currentSessionId; }, [currentSessionId]);
 
   
   const createNewSession = () => {
-    setCurrentSessionId(() => {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('timingGatesSessionId', JSON.stringify(currentSessionId + 1));
-      }
-      return currentSessionId + 1
-    });
-    toast("New session created", {
-      indicator: <CircleCheck />,
-      variant: "success",
+    const newSessionId = currentSessionId + 1;
+    setCurrentSessionId(newSessionId);
+    
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('timingGatesSessionId', JSON.stringify(newSessionId));
+    }
+    
+    toast(`New session ${newSessionId} created.`, {
+      icon: <CircleCheck />,
+      cancel: {
+        label: 'Close',
+        onClick: () => console.log('Closed Toast!'),
+      },
     });
   }
 
@@ -64,7 +72,7 @@ export const TimingGates: React.FC = () => {
 
   const updateEvents = (newEvent: TimingEvent) => {
     setEvents(prev => {
-      const updatedEvents = [...prev, newEvent].sort((a, b) => a.timestamp - b.timestamp);
+      const updatedEvents = [...prev, newEvent].sort((a, b) => b.timestamp - a.timestamp);
       if (typeof window !== 'undefined') {
         localStorage.setItem('timingGatesEvents', JSON.stringify(updatedEvents));
       }
@@ -160,7 +168,7 @@ export const TimingGates: React.FC = () => {
     }));
 
     let timeDiff = 0;
-    if (currentEvents.length > 0) {
+    if (currentEvents.length > 0 && currentEvents[0].sessionId === sessionIdRef.current) {
       timeDiff = timestamp - currentEvents[0].timestamp;
     }
     
@@ -170,14 +178,14 @@ export const TimingGates: React.FC = () => {
       : 0;
   
     updateEvents({
-      sessionId: currentSessionId,
+      sessionId: sessionIdRef.current,
       timestamp,
       timeDiff,
       macAddress,
       senderAlias: existingSender.alias,
       speed: Math.round(speed * 1000) / 1000,
     });
-  }, [currentSessionId, updateEvents]);
+  }, [updateEvents]);
 
   const {
     status: serialStatus,
@@ -196,7 +204,16 @@ export const TimingGates: React.FC = () => {
 
   return (
     <div className="bg-background-dark text-text-main font-display overflow-x-hidden min-h-screen flex flex-col selection:bg-primary selection:text-black">
-      <ToastProvider />
+      <Toaster 
+        position="bottom-center" 
+        
+        toastOptions={{
+          classNames: {
+            toast: "!bg-surface-new !text-primary !border-surface-new !rounded-large",
+            cancelButton: "!text-primary !border !border-primary !rounded-large ",
+          },
+        }}
+      />
       <Header />
       <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-[1920px] mx-auto w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">

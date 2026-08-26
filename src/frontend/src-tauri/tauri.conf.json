@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "feb-race-timing-dashboard",
   "version": "0.1.0",
-  "identifier": "miguel-antoons.dev",
+  "identifier": "com.miguelantoons.feb-race-timing-dashboard",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:3000",
@@ -35,6 +35,17 @@
     ],
     "android": {
       "debugApplicationIdSuffix": ".debug"
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+      "updater": {
+        "active": true,
+        "dialog": true,
+        "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEZERUE0MENFQjFDRTk0OTkKUldTWmxNNnh6a0RxL1RPUis4aVJMM0lhSnFVZURHeWJtbG9TNEJyancraU04dHZlSmV4UU92RTIK",
+        "endpoints": [
+          "https://github.com/miguel-antoons/feb_timing_gates/releases/latest/download/latest.json"
+        ]
+      }
     }
-  }
 }

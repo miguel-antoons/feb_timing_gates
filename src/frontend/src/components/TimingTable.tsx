@@ -6,10 +6,12 @@ import { TimingEvent } from "../types";
 
 interface TimingTableProps {
   events: TimingEvent[];
+  calculateTimeDiff: (events: TimingEvent[], index: number) => number;
+  calculateSpeed: (events: TimingEvent[], index: number) => number;
 }
 
 
-export const TimingTable: React.FC<TimingTableProps> = ({ events }) => {
+export const TimingTable: React.FC<TimingTableProps> = ({ events, calculateTimeDiff, calculateSpeed }) => {
   const formatTimestamp = (timestamp: number) => {
     const date = new Date(Math.floor(timestamp));
     const ms = timestamp % 1000;
@@ -23,13 +25,14 @@ export const TimingTable: React.FC<TimingTableProps> = ({ events }) => {
   };
   
   // Format time difference
-  const formatTimeDiff = (timeDiff: number) => {
-    if (timeDiff === 0) return '-'; // First event
+  const formatTimeDiff = (events: TimingEvent[], index: number) => {
+    const timeDiff = calculateTimeDiff(events, index);
+    if (timeDiff === 0) return '-';
     return (timeDiff / 1000).toFixed(3) + 's';
   };
 
-
-  const formatSpeed = (speed: number) => {
+  const formatSpeed = (events: TimingEvent[], index: number) => {
+    const speed = calculateSpeed(events, index);
     if (speed === undefined || speed === 0) return '-';
     return speed + ' kph';
   }
@@ -59,8 +62,8 @@ export const TimingTable: React.FC<TimingTableProps> = ({ events }) => {
                 <Table.Cell className={event.sessionId % 2 ? "bg-surface-dark" : "bg-surface-new"}>Session {event.sessionId}</Table.Cell>
                 <Table.Cell className={event.sessionId % 2 ? "bg-surface-dark" : "bg-surface-new"}>{event.senderAlias}</Table.Cell>
                 <Table.Cell className={event.sessionId % 2 ? "bg-surface-dark" : "bg-surface-new"}>{formatTimestamp(event.timestamp)}</Table.Cell>
-                <Table.Cell className={event.sessionId % 2 ? "bg-surface-dark" : "bg-surface-new"}>{formatTimeDiff(event.timeDiff)}</Table.Cell>
-                <Table.Cell className={event.sessionId % 2 ? "bg-surface-dark" : "bg-surface-new"}>{formatSpeed(event.speed)}</Table.Cell>
+                <Table.Cell className={event.sessionId % 2 ? "bg-surface-dark" : "bg-surface-new"}>{formatTimeDiff(events, index)}</Table.Cell>
+                <Table.Cell className={event.sessionId % 2 ? "bg-surface-dark" : "bg-surface-new"}>{formatSpeed(events, index)}</Table.Cell>
               </Table.Row>
             ))}
           </Table.Body>

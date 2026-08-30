@@ -15,10 +15,34 @@ interface EventTableProps {
 
 export const EventsPane: React.FC<EventTableProps> = ({ events, createNewSession, resetAll, handleTrigger }) => {
 
+  const calculateTimeDiff = (events: TimingEvent[], index: number) => {
+    if (index === events.length - 1 || events[index].sessionId !== events[index + 1].sessionId) {
+      return 0; // Last event or different session
+    }
+    return events[index].timestamp - events[index + 1].timestamp;
+  };
+
+  const calculateSpeed = (events: TimingEvent[], index: number) => {
+    const timeDiff = calculateTimeDiff(events, index);
+    const distanceToPrevious = events[index].distanceToPrevious;
+    const speed = timeDiff > 0 && distanceToPrevious > 0
+      ? ((distanceToPrevious / (timeDiff / 1000)) * 3.6)
+      : 0;
+    return Math.round(speed * 1000) / 1000;
+  };
+
   const handleExport = async () => {
-    const headers = "SessionId,GateAlias,Timestamp_ms,TimeDiff_ms_,Speed_kmh,MacAddress\n";
-    const rows = [...events].reverse().map(e =>
-      `${e.sessionId},${e.senderAlias},${e.timestamp},${e.timeDiff},${e.speed},${e.macAddress}`
+    const headers = "SessionId,GateAlias,Timestamp_ms,TimeDiff_ms,Speed_kph,DistanceToPrevious_m,MacAddress\n";
+    const rows = [...events].reverse().map((e, index) =>
+      `
+        ${e.sessionId},
+        ${e.senderAlias},
+        ${e.timestamp},
+        ${calculateTimeDiff(events, index)},
+        ${calculateSpeed(events, index)},
+        ${e.distanceToPrevious},
+        ${e.macAddress}
+      `
     ).join("\n");
     
     const csvContent = headers + rows;
@@ -56,7 +80,11 @@ export const EventsPane: React.FC<EventTableProps> = ({ events, createNewSession
         </div>
       </div>
       <div className="flex-1 overflow-y-auto">
-        <TimingTable events={events} />
+        <TimingTable
+          events={events}
+          calculateTimeDiff={calculateTimeDiff}
+          calculateSpeed={calculateSpeed}
+        />
       </div>
     </div>
   );

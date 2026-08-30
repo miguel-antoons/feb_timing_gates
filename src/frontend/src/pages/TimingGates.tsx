@@ -31,14 +31,15 @@ export const TimingGates: React.FC = () => {
   });
   const [latestEvents, setLatestEvents] = useState<LatestEvents>({});
   const sendersRef = useRef(senders);
-  const eventsRef = useRef(events);
   const latestEventsRef = useRef(latestEvents);
   const sessionIdRef = useRef(currentSessionId);
 
   useEffect(() => { sendersRef.current = senders; }, [senders]);
-  useEffect(() => { eventsRef.current = events; }, [events]);
   useEffect(() => { latestEventsRef.current = latestEvents; }, [latestEvents]);
   useEffect(() => { sessionIdRef.current = currentSessionId; }, [currentSessionId]);
+
+  // --- Serial Port Connection ---
+  const serialBaudRate = 115200;
 
   
   const createNewSession = () => {
@@ -82,21 +83,14 @@ export const TimingGates: React.FC = () => {
 
 
   // Manual trigger function
-  const handleManualTrigger = () => {
-    const timestamp = Date.now(); // Convert to microseconds for consistency
-    let timeDiff = 0;
-    if (events.length > 0) {
-      timeDiff = timestamp - events[0].timestamp
-    }
-    
+  const handleManualTrigger = () => {    
     // Log the manual trigger event (event: 3, senderAlias: "Manual Trigger")
     updateEvents({
       sessionId: currentSessionId,
-      timestamp,
-      timeDiff, // No time difference for manual triggers
+      timestamp: Date.now(),
       macAddress: '-',
       senderAlias: 'Manual Trigger',
-      speed: 0 // Speed is unknown for manual triggers
+      distanceToPrevious: 0,
     });
   };
 
@@ -108,10 +102,6 @@ export const TimingGates: React.FC = () => {
       )
     );
   };
-
-  // --- Serial Port Connection ---
-  const serialBaudRate = 115200;
-
 
   // Update sender alias
   const updateSenderAlias = useCallback((senderId: number, newAlias: string) => {
@@ -135,7 +125,6 @@ export const TimingGates: React.FC = () => {
     const macAddress = event.mac_address;
 
     const currentSenders = sendersRef.current;
-    const currentEvents = eventsRef.current;
 
     const existingSender = currentSenders.find(sender => sender.macAddress === macAddress);
 
@@ -166,24 +155,13 @@ export const TimingGates: React.FC = () => {
       ...prev,
       [macAddress]: event.event,
     }));
-
-    let timeDiff = 0;
-    if (currentEvents.length > 0 && currentEvents[0].sessionId === sessionIdRef.current) {
-      timeDiff = timestamp - currentEvents[0].timestamp;
-    }
-    
-    const distanceToPrevious = existingSender.distanceToPrevious;
-    const speed = timeDiff > 0 && distanceToPrevious > 0 
-      ? ((distanceToPrevious / (timeDiff / 1000)) * 3.6) 
-      : 0;
-  
+      
     updateEvents({
       sessionId: sessionIdRef.current,
       timestamp,
-      timeDiff,
       macAddress,
       senderAlias: existingSender.alias,
-      speed: Math.round(speed * 1000) / 1000,
+      distanceToPrevious: existingSender.distanceToPrevious,
     });
   }, [updateEvents]);
 

@@ -30,7 +30,7 @@
 
 // delays
 #define IDENTIFY_LED_DURATION 3000 // 3 seconds
-#define SEND_INTERVAL_MS 1000 // 3 seconds
+#define SEND_INTERVAL_MS 1000 // 1 seconds
 
 // GPS variables
 HardwareSerial gpsSerial(1);
@@ -234,7 +234,7 @@ bool sendWithRetry(struct_message *msg, const uint8_t *addr, uint8_t maxRetries 
 
 bool initLed() {
     pinMode(LED_PIN, OUTPUT);
-    digitalWrite(LED_PIN, HIGH); // LED off initially
+    digitalWrite(LED_PIN, LOW); // LED on initially
     Serial.println("Identify LED initialized on pin " + String(LED_PIN));
     return true;
 }
@@ -340,6 +340,7 @@ void setup() {
 
 
 void loop() {
+    digitalWrite(LED_PIN, HIGH); // LED off
     readGPS();
     // Read laser sensor state
     sensorState = digitalRead(SENSOR_PIN);

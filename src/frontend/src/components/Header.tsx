@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Gear } from '@gravity-ui/icons';
 import { Button } from '@heroui/react';
+import febLogo from '../assets/feb_logo.png';
+import tmcLogo from '../assets/tmc_logo.svg';
 
 export const Header: React.FC = () => {
   const [time, setTime] = useState(new Date());
@@ -27,10 +29,10 @@ export const Header: React.FC = () => {
             <img
               alt="FEB Logo"
               className="w-full h-full object-contain"
-              src="https://formulaelectric.be/wp-content/uploads/2024/09/FEB-Icon_Green_Smaller-1024x847.png"
+              src={febLogo}
             />
           </div>
-          <div className="h-8 w-[1px] bg-surface-border"></div>
+          <div className="h-8 w-px bg-surface-border"></div>
           <div className="flex flex-col">
             <span className="text-white font-bold text-sm tracking-wide leading-none">FORMULA E BELGIUM</span>
             <span className="text-primary text-[10px] font-bold tracking-[0.2em] uppercase leading-none mt-1">Official Timing</span>
@@ -39,7 +41,7 @@ export const Header: React.FC = () => {
             <img
               alt="TMC Logo"
               className="w-full h-full object-contain"
-              src="https://hightechcampus.com/storage/5847/TMC-logo-2022-blue_RGB.png"
+              src={tmcLogo}
             />
           </div>
         </div>

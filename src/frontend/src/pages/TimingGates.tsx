@@ -7,7 +7,8 @@ import { EventsPane } from '../panes/EventsPane';
 import { generateDefaultAlias } from '../utils/senders';
 import { Toaster } from 'sonner';
 import { toast } from 'sonner';
-import { CircleCheck } from '@gravity-ui/icons';
+import { CircleCheck, CircleXmark } from '@gravity-ui/icons';
+import { ERRORS } from '../utils/errors';
 
 
 export const TimingGates: React.FC = () => {
@@ -55,6 +56,10 @@ export const TimingGates: React.FC = () => {
       cancel: {
         label: 'Close',
         onClick: () => console.log('Closed Toast!'),
+      },
+      classNames: {
+        toast: "!bg-surface-new !text-primary !border-surface-new !rounded-large",
+        cancelButton: "!text-primary !border !border-primary !rounded-large",
       },
     });
   }
@@ -118,6 +123,20 @@ export const TimingGates: React.FC = () => {
     event: number;
     mac_address: string
   }) => {
+    if (event.message_type in ERRORS) {
+      console.error(`Error from receiver: ${ERRORS[event.message_type as MessageType]}`);
+      toast.error(ERRORS[event.message_type as MessageType], {
+        icon: <CircleXmark />,
+        cancel: {
+          label: 'Close',
+          onClick: () => console.log('Closed Toast!'),
+        },
+        classNames: {
+          toast: "!bg-surface-new !text-red-500 !border-surface-new !rounded-large",
+          cancelButton: "!text-red-500 !border !border-red-500 !rounded-large",
+        },
+      });
+    }
     // Only process BEAM_EVENT messages
     if (event.message_type !== MessageType.BEAM_EVENT) return;
     
@@ -182,16 +201,7 @@ export const TimingGates: React.FC = () => {
 
   return (
     <div className="bg-background-dark text-text-main font-display overflow-x-hidden min-h-screen flex flex-col selection:bg-primary selection:text-black">
-      <Toaster 
-        position="bottom-center" 
-        
-        toastOptions={{
-          classNames: {
-            toast: "!bg-surface-new !text-primary !border-surface-new !rounded-large",
-            cancelButton: "!text-primary !border !border-primary !rounded-large ",
-          },
-        }}
-      />
+      <Toaster position="bottom-center" />
       <Header />
       <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-[1920px] mx-auto w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">

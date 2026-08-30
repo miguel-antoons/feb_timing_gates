@@ -1,125 +1,53 @@
 # FEB Timing System
 
-A real-time timing system for racing events, powered by Arduino hardware and a modern React dashboard.
-
-## Overview
-
-This system provides complete race timing capabilities with:
-- **Hardware**: ESP32-based wireless laser timing gates + hub receiver
-- **Backend**: Python FastAPI server with WebSocket broadcasting (uses **uv** for dependency management)
-- **Frontend**: React dashboard displaying live lap times, sector splits, and trap speeds
-
----
+A real-time timing system for racing events, powered by ESP32-based wireless timing gates and a modern dashboard interface.
 
 ## Project Structure
 
 ```
 FEB-Timing/
 ├── src/
-│   ├─ backend/          # Python backend (FastAPI + WebSocket + uv)
-│   │   ├─ receiver.py         # Main server
-│   │   ├─ pyproject.toml     # uv dependencies
-│   │   └─ requirements.txt    # Legacy pip backup
-│   ├─ frontend/         # React dashboard (Vite)
-│   │   ├─ App.tsx            # Main React app
-│   │   └─ components/       # React components
-│   └─ esp32/            # Arduino sketches
-├── scripts/            # Utility and startup scripts
-│   ├─ start_all.bat    # Windows (double-click)
-│   ├─ start_all.ps1    # Windows (PowerShell)
-│   └─ start_all.sh     # Linux/macOS
-└── documentation/      # Complete documentation
-   ├─ INDEX.md          # Documentation index
-   └─ guides/           # All guides
-      ├─ USER_GUIDE.md          # User guide and basic usage
-      ├─ PROJECT_SUMMARY.md     # System overview
-      ├─ QUICK_REFERENCE.md      # Common tasks & troubleshooting
-      ├─ COMPLETE_SETUP_GUIDE.md # Full technical details
-      └─ HARDWARE_SETUP_CHECKLIST.md # Hardware verification
+│   ├── backend/          # Python FastAPI server with WebSocket broadcasting
+│   │   ├── receiver.py     # Main server application
+│   │   ├── pyproject.toml # uv dependency management
+│   │   └── requirements.txt # Legacy pip dependencies
+│   ├── frontend/         # React dashboard (Vite)
+│   │   ├── App.tsx        # Main React application
+│   │   └── components/    # UI components for live timing data
+│   └── esp32/            # ESP32 firmware for timing gates
+├── scripts/             # Platform-specific startup scripts
+├── .github/             # GitHub workflows for automated releases
+└── documentation/       # Complete system documentation
 ```
-
----
-
-## Quick Start
-
-### Windows
-- **Double-click:** `scripts/start_all.bat`
-- **PowerShell:** Run `./scripts/start_all.ps1`
-
-### Linux/macOS
-- **Terminal:** 
-  ```bash
-  chmod +x scripts/start_all.sh  # If not already executable
-  ./scripts/start_all.sh
-  ```
-
-The system will:
-1. Start Python backend on port 8000 (using uv)
-2. Start React frontend on port 3000
-3. Open dashboard in your browser at `http://localhost:3000`
 
 ---
 
 ## Installation
 
-### Prerequisites
-- **Python 3.10+** (Recommend 3.11+)
-- **Node.js 18+** (LTS recommended)
+Pre-built binaries for all platforms are available on the [GitHub Releases page](https://github.com/miguel-antoons/feb-timing-gates/releases). Download the appropriate version for your platform:
 
-### Backend (Python)
+| Platform | Asset Name                     | Installation Instructions                     |
+|----------|--------------------------------|-----------------------------------------------|
+| Windows  | `feb-timing-gates_x.x.x_x64.msi` | Run the installer and follow the prompts      |
+| macOS    | `feb-timing-gates_x.x.x_aarch64.dmg` | Open the DMG and drag to Applications folder |
+| Linux (.deb)    | `feb-timing-gates_x.x.x_amd64.deb`  | Install with `sudo apt install ./feb-timing-gates*.deb` (preferred) or `sudo dpkg -i feb-timing-gates*.deb` |
+| Linux (.rpm)    | `feb-timing-gates_x.x.x_x86_64.rpm` | Install with `sudo rpm -i feb-timing-gates*.rpm` |
+| Linux (AppImage)| `feb-timing-gates_x.x.x_x86_64.AppImage` | Make executable with `chmod +x feb-timing-gates*.AppImage` and run directly |
 
-**Install uv (if not already installed):**
-```bash
-# Linux/macOS
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Windows (PowerShell)
-irm https://astral.sh/uv/install.ps1 | iex
-```
-
-**Install Python dependencies:**
-```bash
-cd src/backend
-uv sync
-```
-
-### Frontend (React)
-```bash
-cd src/frontend
-npm install
-```
+For manual installation from source, see the [Software Setup Guide](documentation/SOFTWARE_SETUP.md).
 
 ---
 
 ## Documentation
 
-Complete documentation is available in the `documentation/` folder:
+The full documentation is available in the [`documentation/`](documentation/INDEX.md) directory. Start with the [Documentation Index](documentation/INDEX.md) for a complete overview of available resources.
 
-- **[Documentation Index](documentation/INDEX.md)** - Start here for all documentation
-- **[User Guide](documentation/guides/USER_GUIDE.md)** - Installation, setup, and usage
-- **[Quick Reference](documentation/guides/QUICK_REFERENCE.md)** - Common tasks and troubleshooting
-- **[Project Summary](documentation/guides/PROJECT_SUMMARY.md)** - System overview and architecture
-- **[Complete Setup Guide](documentation/guides/COMPLETE_SETUP_GUIDE.md)** - Full technical documentation
-- **[Hardware Setup Checklist](documentation/guides/HARDWARE_SETUP_CHECKLIST.md)** - Hardware verification steps
-
----
-
-## Platform Support
-
-| Platform | Startup Script | Backend Command | Dependency Management |
-|----------|---------------|-----------------|----------------------|
-| **Windows** | `scripts/start_all.bat` | `uv run uvicorn receiver:app` | uv (pyproject.toml) |
-| **Windows** | `scripts/start_all.ps1` | `uv run uvicorn receiver:app` | uv (pyproject.toml) |
-| **Linux/macOS** | `scripts/start_all.sh` | `uv run uvicorn receiver:app` | uv (pyproject.toml) |
-
----
-
-## Support
-
-For troubleshooting and detailed information, refer to the [Documentation Index](documentation/INDEX.md).
-
-**Need uv?** Install from https://astral.sh/uv
-
-**Need help?** Check the [Quick Reference](documentation/guides/QUICK_REFERENCE.md) for platform-specific troubleshooting.
-
-Good luck with your timing system! 🏁
+| Document | Description |
+|----------|-------------|
+| [Project Overview](documentation/PROJECT_OVERVIEW.md) | System architecture and components |
+| [Hardware Setup](documentation/HARDWARE_SETUP.md) | Physical setup of timing gates |
+| [Software Setup](documentation/SOFTWARE_SETUP.md) | Installation and configuration |
+| [Usage Guide](documentation/USAGE_GUIDE.md) | Operating the timing system |
+| [Communication Protocol](documentation/COMMUNICATION_PROTOCOL.md) | Technical details about device communication |
+| [Device Management](documentation/DEVICE_MANAGEMENT.md) | Managing timing gates and receivers |
+| [Troubleshooting](documentation/TROUBLESHOOTING.md) | Common issues and solutions |

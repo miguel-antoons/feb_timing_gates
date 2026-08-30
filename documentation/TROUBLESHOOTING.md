@@ -51,11 +51,12 @@
    - Ensure the GPS module is configured for 115200 baud
    - Check the sender firmware for correct baud rate settings
 
-### Frontend Connection Issues
+### Application Connection Issues
 
 **Symptoms:**
-- Dashboard not connecting to receiver
+- Application not connecting to receiver
 - No events appearing in the Events Pane
+- Serial port not listed in the application
 
 **Possible Causes and Solutions:**
 
@@ -63,18 +64,32 @@
    - Ensure no other program is using the serial port
    - Try disconnecting and reconnecting the USB cable
    - Try a different USB port or cable
+   - Restart the Tauri application
 
 2. **Incorrect baud rate**
-   - Verify the baud rate is set to 115200 in both firmware and frontend
+   - Verify the baud rate is set to 115200 in both firmware and application
    - Check the serial monitor in Arduino IDE to confirm communication
 
-3. **Browser compatibility**
-   - Use Chrome, Edge, or Firefox (Web Serial API support required)
-   - Ensure you're using a recent version of the browser
+3. **Permission issues**
+   - On Linux, ensure your user is in the `dialout` group:
+     ```bash
+     sudo usermod -a -G dialout $USER
+     ```
+   - Then log out and log back in for the changes to take effect
+   - On Windows, ensure you have the proper drivers installed for the ESP32 board
 
-4. **Permission issues**
-   - Grant permission when the browser requests access to the serial port
-   - On Linux, ensure your user is in the `dialout` group
+4. **Tauri backend issues**
+   - Check the application logs for errors
+   - Try running the application in development mode to see more detailed logs:
+     ```bash
+     npm run tauri dev
+     ```
+   - Ensure Rust and all dependencies are properly installed
+
+5. **Port not listed**
+   - Make sure the receiver is properly connected
+   - Try a different USB cable (some cables are power-only)
+   - Check if the device appears in your system's device manager/list of serial devices
 
 ### Event Duplication or Missing Events
 
@@ -100,6 +115,8 @@
 
 ## Error Codes
 
+### ESP32 Error Codes
+
 | Code | Name | Description | Solution |
 |------|------|-------------|----------|
 | 3 | ADD_PEER_FAILURE | Failed to add peer to ESP-NOW | Check MAC address format, reset device |
@@ -108,7 +125,15 @@
 | 7 | RCVD_SIZE_MISMATCH | Received data size mismatch | Check firmware versions, reset devices |
 | 11 | ESP_NOW_INIT_FAILURE | ESP-NOW initialization failed | Reset device, check WiFi antenna |
 | 13 | UNKNOWN_MESSAGE_TYPE | Unknown message type received | Update firmware, check for corruption |
-| 14 | WRONG_MESSAGE_FORMAT | Incorrect message format | Verify serial communication settings |
+| 14 | WRONG_MESSAGE_FORMAT | Incorrect message format | Verify the message format matches the expected CSV structure |
+
+### Tauri Application Errors
+
+| Error | Description | Solution |
+|-------|-------------|----------|
+| Failed to open port | The application couldn't open the selected serial port | Check if another program is using the port, verify permissions, try a different cable/port |
+| Failed to write to port | The application couldn't write data to the serial port | Check if the port is still connected, verify the device is responsive |
+| Failed to list ports | The application couldn't list available serial ports | Check system permissions, ensure proper drivers are installed |
 
 ## Debugging Tools
 

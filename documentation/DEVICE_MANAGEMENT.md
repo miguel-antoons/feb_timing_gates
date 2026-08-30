@@ -56,7 +56,7 @@ There are two methods to find the receiver's MAC address:
 
 #### For a Timing Gate:
 1. In the dashboard, click the "Identify" button next to a sender
-2. The timing gate will blink its LED for 3 seconds
+2. The timing gate will blink its LED for 5 seconds
 3. The MAC address is displayed in the Sender List
 
 ### Formatting MAC Addresses

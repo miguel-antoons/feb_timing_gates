@@ -6,7 +6,7 @@ The FEB Timing Gates system is a wireless timing solution for racing events, con
 
 1. **ESP32-based timing gates (senders)** - Devices that detect beam breaks and send timing data
 2. **ESP32 receiver hub** - Central device that collects data from all timing gates
-3. **Frontend dashboard** - Web application for visualizing timing data in real-time
+3. **Tauri desktop application** - Native application for visualizing timing data in real-time
 
 ```mermaid
 flowchart TD
@@ -14,7 +14,7 @@ flowchart TD
     B[Timing Gate 2] -->|ESP-NOW| D
     C[Timing Gate N] -->|ESP-NOW| D
     D -->|Serial| E[Computer]
-    E -->|WebSocket| F[Frontend Dashboard]
+    E -->|Tauri IPC| F[Tauri Desktop App]
 ```
 
 ## Project Structure
@@ -46,5 +46,7 @@ feb_timing_gates/
 ### Software Components
 - **ESP-NOW protocol** - Low-latency wireless communication between devices
 - **Serial communication** - Receiver to computer data transfer
-- **React frontend** - Real-time visualization of timing data
-- **Web Serial API** - Browser-based communication with the receiver
+- **Tauri application** - Native desktop application with:
+  - React-based frontend for real-time visualization
+  - Rust backend for serial communication and system integration
+- **Tauri IPC** - Communication between frontend and backend

@@ -26,7 +26,7 @@
 #### Sender Firmware
 1. Open `src/esp32/sender.ino` in Arduino IDE
 2. Select the correct board: Go to Tools > Board > esp32 and select XIAO ESP32C6.
-3. Go to Tools > USB CDC On Boot and change it to Enabled. Do not skip this step, or you won't see your sensor data in the serial monitor.
+3. Go to Tools > USB CDC On Boot and change it to Enabled. Do not skip this step, or you won't see your sensor data in the serial monitor. This setting is crucial for both sender and receiver firmware.
 4. Select the correct port
     - Plug the ESP32-C6 into your computer via a data-capable USB-C cable (some cheap charging cables don't transmit data).
     - Go to Tools > Port and select the COM port that appeared when you plugged it in.
@@ -40,7 +40,9 @@
 
 Identical steps to the sender firmware, but open `src/esp32/receiver.ino` instead.
 
-## Frontend Setup
+## Frontend Setup (Tauri Application)
+
+The frontend is built as a Tauri application, which provides a native desktop experience with direct access to system resources like serial ports.
 
 1. Navigate to the frontend directory:
    ```bash
@@ -54,17 +56,23 @@ Identical steps to the sender firmware, but open `src/esp32/receiver.ino` instea
 
 3. Start the development server:
    ```bash
-   npm run dev
+   npm run tauri dev
    ```
+   This will start the Tauri development environment, which includes both the frontend and the Rust backend.
 
-4. Open your browser to `http://localhost:3000` (or the port shown in the console)
+4. For building the app, use:
+   ```bash
+   npm run tauri build
+   ```
+   This will create a platform-specific executable in the `src-tauri/target/release` directory.
 
-## Production Build
+## Tauri Configuration
 
-To create a production build of the frontend:
+The Tauri application is configured in `src-tauri/tauri.conf.json`. Key settings include:
 
-```bash
-npm run build
-```
+- Window size and behavior
+- Application name and version
+- Build commands
+- Security settings
 
-The built files will be in the `dist` directory and can be served by any static file server.
+For more details on Tauri configuration, refer to the [Tauri documentation](https://tauri.app/v1/api/config/).

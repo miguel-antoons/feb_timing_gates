@@ -6,7 +6,7 @@ The FEB Timing Gates system uses multiple communication protocols:
 
 1. **ESP-NOW** - Wireless communication between timing gates and receiver
 2. **Serial (UART)** - Communication between receiver and computer
-3. **Web Serial API** - Browser-based communication with the receiver
+3. **Tauri IPC** - Communication between the frontend and Rust backend in the Tauri application
 
 ## Message Structure
 
@@ -59,15 +59,22 @@ Example:
 - **Timing Gates (Senders)**: Broadcast beam break events to the receiver
 - **Receiver**: Can send identification requests to specific timing gates
 
-## Web Serial API
+## Tauri IPC Communication
 
-The frontend uses the Web Serial API to communicate with the receiver:
+The Tauri application uses inter-process communication (IPC) between the React frontend and Rust backend:
 
-1. **Connect**: User selects a serial port to connect to
-2. **Read**: The frontend continuously reads data from the serial port
-3. **Write**: The frontend can send commands to the receiver:
-   - `12` - Request the receiver's MAC address
-   - `2,[MAC_ADDRESS]` - Request identification of a specific sender
+1. **Frontend to Backend Commands**:
+   - `list_ports` - List available serial ports
+   - `open_port` - Open a serial port connection
+   - `write_port` - Write data to the serial port
+   - `close_port` - Close the serial port connection
+
+2. **Backend to Frontend Events**:
+   - `serial-data` - Event containing data read from the serial port
+
+3. **Commands Sent to Receiver**:
+   - `12` - Request the receiver's MAC address (IDENTIFY_RECEIVER_REQUEST)
+   - `2,[MAC_ADDRESS]` - Request identification of a specific sender (IDENTIFY_SENDER_REQUEST)
 
 ## Time Synchronization
 

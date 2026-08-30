@@ -4,14 +4,21 @@
 
 1. **Power on all timing gates** - Ensure each gate has power and the laser beam is properly aligned
 2. **Connect the receiver hub** - Plug the receiver ESP32 into your computer via USB
-3. **Start the frontend dashboard** - Run `npm run dev` in the frontend directory
+3. **Start the Tauri application**:
+   - For development: Run `npm run tauri dev` in the frontend directory
+   - For production: Run the built executable from `src-tauri/target/release`
 4. **Connect to the receiver** - Click the "Connect" button in the dashboard and choose the correct serial port for the receiver
 
-Once a sender has a GPS lock, it should automatically connect to the receiver. If it doesn't appear in the dashboard, check the PPS light on the timing gate. If it's not blinking, the gate hasn't connected to the receiver yet. If it is blinking, try to break the laser beam to see if the sender gets added to the dashboard. If it still doesn't appear, check the serial monitor of the sender for any errors.
+Once a sender has a GPS lock, it should automatically connect to the receiver. The sender will appear in the dashboard when it successfully sends its first beam break event to the receiver. If it doesn't appear:
 
-## Frontend Dashboard
+1. Check the PPS light on the timing gate - it should be blinking once per second when GPS is locked
+2. Break the laser beam to trigger an event
+3. If it still doesn't appear, check the serial monitor of the sender for errors
+4. Verify that the receiver's MAC address in the sender firmware matches your actual receiver's MAC address
 
-The dashboard consists of two main panes:
+### Tauri Application
+
+The Tauri application provides a native desktop experience with direct access to system resources. The interface consists of two main panes:
 
 ### Sender List (Left Pane)
 - Lists all detected timing gates
@@ -41,7 +48,7 @@ The dashboard consists of two main panes:
 To identify a specific timing gate:
 
 1. Click the "Identify" button next to a sender in the Sender List
-2. The corresponding timing gate will blink its LED for 3 seconds
+2. The corresponding timing gate will blink its LED for 5 seconds
 3. Use this to verify which physical gate corresponds to which entry in the dashboard
 
 ## Session Management

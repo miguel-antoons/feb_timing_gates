@@ -26,8 +26,8 @@ export const SenderList: React.FC<SenderListProps> = (
 
   return (
     <div className="bg-panel-dark rounded-lg p-4 shadow-lg max-w-108">
-      <div className="flex items-center justify-between mb-0">
-        <h2 className="text-xl font-bold mb-4 text-text-main flex items-center gap-2"><Eye className="size-5" />Gates</h2>
+      <div className="flex items-center justify-between mb-0 h-13">
+        <h2 className="text-xl font-bold text-text-main flex items-center gap-2"><Eye className="size-5" />Gates</h2>
         <ConnectButton serialStatus={serialStatus} onConnectSerial={onConnectSerial} onDisconnectSerial={onDisconnectSerial} />
       </div>
       <DragDropProvider
@@ -35,7 +35,7 @@ export const SenderList: React.FC<SenderListProps> = (
           setGateOrder((gateOrder) => move(gateOrder, event));
         }}
       >
-        <div className="space-y-2 max-h-[600px]" ref={containerRef}>
+        <div className="space-y-2 max-h-150" ref={containerRef}>
         {senders.length === 0 ? (
           <p className="text-text-secondary text-center py-4">No senders detected</p>
         ) : (

@@ -69,7 +69,9 @@ export const EventsPane: React.FC<EventTableProps> = ({ events, createNewSession
   return (
     <div className="bg-panel-dark rounded-lg p-4 shadow-lg flex flex-col h-full">
       <div>
-        <h2 className="text-xl font-bold mb-4 text-text-main flex items-center gap-2"><Clock className="size-5" />Timing Events</h2>
+        <div className="flex items-center h-13">
+          <h2 className="text-xl font-bold text-text-main flex items-center gap-2"><Clock className="size-5" />Timing Events</h2>
+        </div> 
         <div className="mb-5">
           <SessionControls
             onExport={handleExport}

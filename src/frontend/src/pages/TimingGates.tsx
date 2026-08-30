@@ -2,7 +2,7 @@ import { useSerialPort } from '@/src/hooks/useSerialPort';
 import { LatestEvents, MessageType, Sender, TimingEvent } from '@/src/types';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Header } from '../components/Header';
-import { SenderList } from '../panes/SenderList';
+import { SenderList } from '../panes/SenderPane';
 import { EventsPane } from '../panes/EventsPane';
 import { generateDefaultAlias } from '../utils/senders';
 import { Toaster } from 'sonner';

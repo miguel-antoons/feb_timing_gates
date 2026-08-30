@@ -14,10 +14,11 @@ interface SenderListProps {
   serialStatus: SerialPortStatus;
   onDisconnectSerial: () => void;
   onConnectSerial: (port: string) => void;
+  sendSerialMessage: (messageType: number, macAddress?: string) => void;
 }
 
 export const SenderList: React.FC<SenderListProps> = (
-  { senders, onUpdateAlias, onUpdateDistance, serialStatus, onDisconnectSerial, onConnectSerial }
+  { senders, onUpdateAlias, onUpdateDistance, serialStatus, onDisconnectSerial, onConnectSerial, sendSerialMessage }
 ) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -45,6 +46,7 @@ export const SenderList: React.FC<SenderListProps> = (
                 key={id}
                 onUpdateAlias={onUpdateAlias}
                 onUpdateDistance={onUpdateDistance}
+                sendSerialMessage={sendSerialMessage}
                 sender={senders[id]}
               />
               )

@@ -52,7 +52,7 @@ export const Header: React.FC = () => {
             {formatTime(time)}
           </p>
         </div>
-        <div className="h-8 w-[1px] bg-surface-border hidden sm:block"></div>
+        <div className="h-8 w-px bg-surface-border hidden sm:block"></div>
         <Button isIconOnly size='lg' className=" bg-surface-border hover:bg-primary-dark hover:text-white transition-colors text-gray-400">
           <Gear className="size-6" />
         </Button>

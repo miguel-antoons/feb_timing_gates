@@ -29,7 +29,7 @@
 #define WRONG_MESSAGE_FORMAT 14
 
 // delays
-#define IDENTIFY_LED_DURATION 3000 // 3 seconds
+#define IDENTIFY_LED_DURATION 5000 // 5 seconds
 #define SEND_INTERVAL_MS 1000 // 1 seconds
 
 // GPS variables
@@ -335,12 +335,12 @@ void setup() {
     if (!initESPNow()) ESP.restart();
     if (!initGPSTimeSync()) ESP.restart();
     Serial.println("-----ESP initialized and ready to be used-----");
+    digitalWrite(LED_PIN, HIGH); // LED off
 }
 
 
 
 void loop() {
-    digitalWrite(LED_PIN, HIGH); // LED off
     readGPS();
     // Read laser sensor state
     sensorState = digitalRead(SENSOR_PIN);

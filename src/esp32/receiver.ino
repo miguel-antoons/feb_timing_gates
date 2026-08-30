@@ -127,11 +127,19 @@ void sendIdentifyRequest(const uint8_t *targetMac) {
     memcpy(peerInfo.peer_addr, targetMac, 6);
     peerInfo.channel = 0;
     peerInfo.encrypt = false;
-    
-    // Add peer
-    if (esp_now_add_peer(&peerInfo) != ESP_OK) {
-        outputMsgCode(ADD_PEER_FAILURE);
-        return;
+
+    // Only add the peer if it doesn't already exist
+    if (!esp_now_is_peer_exist(targetMac)) {
+        // Set up peer info
+        memcpy(peerInfo.peer_addr, targetMac, 6);
+        peerInfo.channel = 0;
+        peerInfo.encrypt = false;
+        
+        // Add peer
+        if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+            outputMsgCode(ADD_PEER_FAILURE);
+            return;
+        }
     }
     
     // Send the identify request

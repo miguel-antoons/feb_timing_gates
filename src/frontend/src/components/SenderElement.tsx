@@ -1,8 +1,8 @@
 import { useSortable } from '@dnd-kit/react/sortable';
 import React, { useState, useRef } from 'react';
 import { Button, ButtonGroup, Input, Label, Modal, Surface, TextField } from "@heroui/react";
-import { PencilToLine, BroadcastSignal, Dots9, Envelope } from '@gravity-ui/icons';
-import { Sender } from '../types';
+import { PencilToLine, BroadcastSignal, Dots9 } from '@gravity-ui/icons';
+import { MessageType, Sender } from '../types';
 
 interface SenderProps {
   id: number;
@@ -10,10 +10,11 @@ interface SenderProps {
   onUpdateAlias: (senderId: number, newAlias: string) => void;
   onUpdateDistance: (senderId: number, distance: number) => void;
   sender: Sender;
+  sendSerialMessage: (messageType: number, macAddress?: string) => void;
 }
 
 
-export const SenderElement: React.FC<SenderProps> = ({id, index, onUpdateAlias, onUpdateDistance, sender}) => {
+export const SenderElement: React.FC<SenderProps> = ({ id, index, onUpdateAlias, onUpdateDistance, sender, sendSerialMessage }) => {
   const [element, setElement] = useState<Element | null>(null);
     const handleRef = useRef<HTMLButtonElement | null>(null);
     const {isDragging} = useSortable({id, index, element, handle: handleRef});
@@ -28,7 +29,13 @@ export const SenderElement: React.FC<SenderProps> = ({id, index, onUpdateAlias, 
       </div>
       <div className="ml-auto pr-2">
         <ButtonGroup>
-          <Button isIconOnly className="transition-all font-bold bg-surface-border text-primary hover:bg-primary hover:text-surface-border" onClick={() => console.log(`Clicked sender ${id}`)}><BroadcastSignal /></Button>
+          <Button
+            isIconOnly
+            className="transition-all font-bold bg-surface-border text-primary hover:bg-primary hover:text-surface-border"
+            onClick={() => sendSerialMessage(MessageType.IDENTIFY_SENDER_REQUEST, sender.macAddress)}
+          >
+            <BroadcastSignal />
+          </Button>
           <Modal>
             <Button isIconOnly className="transition-all font-bold  bg-primary hover:bg-surface-border hover:text-primary text-surface-border"><PencilToLine /></Button>
             <Modal.Backdrop>
@@ -54,7 +61,14 @@ export const SenderElement: React.FC<SenderProps> = ({id, index, onUpdateAlias, 
                         </TextField>
                         <TextField className="w-full bg-surface-dark" name="distanceToPrevious" type="number" variant="secondary">
                           <Label>Distance to Previous Gate (m)</Label>
-                          <Input className="green-primary-input bg-surface-border" type="number" min="0" placeholder="Enter the Distance in Meters" value={sender.distanceToPrevious} onChange={(e) => onUpdateDistance(id, Number(e.target.value))} />
+                          <Input
+                            className="green-primary-input bg-surface-border"
+                            type="number"
+                            min="0"
+                            placeholder="Enter the Distance in Meters"
+                            value={sender.distanceToPrevious}
+                            onChange={(e) => onUpdateDistance(id, Number(e.target.value))}
+                          />
                         </TextField>
                       </form>
                     </Surface>

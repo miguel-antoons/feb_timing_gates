@@ -204,6 +204,7 @@ export const TimingGates: React.FC = () => {
               serialStatus={serialStatus}
               onDisconnectSerial={disconnectSerial}
               onConnectSerial={connectSerial}
+              sendSerialMessage={sendMessage}
             />
           </div>
 

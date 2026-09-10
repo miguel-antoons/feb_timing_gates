@@ -32,17 +32,16 @@ export const EventsPane: React.FC<EventTableProps> = ({ events, createNewSession
   };
 
   const handleExport = async () => {
-    const headers = "SessionId,GateAlias,Timestamp_ms,TimeDiff_ms,Speed_kph,DistanceToPrevious_m,MacAddress\n";
+    const headers = "Index,SessionId,GateAlias,Timestamp_ms,TimeDiff_ms,Speed_kph,DistanceToPrevious_m,MacAddress\n";
     const rows = [...events].reverse().map((e, index) =>
-      `
-        ${e.sessionId},
-        ${e.senderAlias},
-        ${e.timestamp},
-        ${calculateTimeDiff(events, index)},
-        ${calculateSpeed(events, index)},
-        ${e.distanceToPrevious},
-        ${e.macAddress}
-      `
+      index + ","
+      + e.sessionId + ","
+      + e.senderAlias + ","
+      + e.timestamp + ","
+      + calculateTimeDiff(events, index) + ","
+      + calculateSpeed(events, index) + ","
+      + e.distanceToPrevious + ","
+      + e.macAddress
     ).join("\n");
     
     const csvContent = headers + rows;

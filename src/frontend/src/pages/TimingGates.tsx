@@ -89,7 +89,6 @@ export const TimingGates: React.FC = () => {
 
   // Manual trigger function
   const handleManualTrigger = () => {    
-    // Log the manual trigger event (event: 3, senderAlias: "Manual Trigger")
     updateEvents({
       sessionId: currentSessionId,
       timestamp: Date.now(),

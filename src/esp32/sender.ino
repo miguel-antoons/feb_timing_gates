@@ -7,10 +7,10 @@
 #define SENSOR_PIN 18
 
 #define PPS_PIN 0
-#define GPS_TX_PIN  1
-#define GPS_RX_PIN  2
+#define GPS_TX_PIN 1
+#define GPS_RX_PIN 2
 
-#define LED_PIN 15
+#define INTERNAL_LED_PIN 15
 
 // Message types
 #define BEAM_EVENT 1
@@ -189,7 +189,7 @@ void OnDataRecv(const esp_now_recv_info_t *recv_info, const uint8_t *receivedDat
             Serial.println("Identify request received for this sender!");
             identifyRequested = true;
             identifyLedEndTime = millis() + IDENTIFY_LED_DURATION;
-            digitalWrite(LED_PIN, LOW); // Turn LED on
+            digitalWrite(INTERNAL_LED_PIN, LOW); // Turn LED on
         }
     }
 }
@@ -233,9 +233,9 @@ bool sendWithRetry(struct_message *msg, const uint8_t *addr, uint8_t maxRetries 
 // * ============================= Initialization Functions ============================
 
 bool initLed() {
-    pinMode(LED_PIN, OUTPUT);
-    digitalWrite(LED_PIN, LOW); // LED on initially
-    Serial.println("Identify LED initialized on pin " + String(LED_PIN));
+    pinMode(INTERNAL_LED_PIN, OUTPUT);
+    digitalWrite(INTERNAL_LED_PIN, LOW); // LED on initially
+    Serial.println("Identify LED initialized on pin " + String(INTERNAL_LED_PIN));
     return true;
 }
 
@@ -335,7 +335,7 @@ void setup() {
     if (!initESPNow()) ESP.restart();
     if (!initGPSTimeSync()) ESP.restart();
     Serial.println("-----ESP initialized and ready to be used-----");
-    digitalWrite(LED_PIN, HIGH); // LED off
+    digitalWrite(INTERNAL_LED_PIN, HIGH); // LED off
 }
 
 
@@ -373,7 +373,7 @@ void loop() {
     if (identifyRequested) {
         if (millis() >= identifyLedEndTime) {
             // Time's up, turn LED off
-            digitalWrite(LED_PIN, HIGH);
+            digitalWrite(INTERNAL_LED_PIN, HIGH);
             identifyRequested = false;
             Serial.println("Identify LED turned off");
         }

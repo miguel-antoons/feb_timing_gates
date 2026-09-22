@@ -11,6 +11,9 @@
 #define GPS_RX_PIN 2
 
 #define INTERNAL_LED_PIN 15
+#define GREEN_LED_PIN 20
+#define AMBER_LED_PIN 19
+#define ALIGNMENT_LASER_PIN 17
 
 // Message types
 #define BEAM_EVENT 1
@@ -189,7 +192,7 @@ void OnDataRecv(const esp_now_recv_info_t *recv_info, const uint8_t *receivedDat
             Serial.println("Identify request received for this sender!");
             identifyRequested = true;
             identifyLedEndTime = millis() + IDENTIFY_LED_DURATION;
-            digitalWrite(INTERNAL_LED_PIN, LOW); // Turn LED on
+            changeStatusLedState(true);
         }
     }
 }
@@ -230,12 +233,21 @@ bool sendWithRetry(struct_message *msg, const uint8_t *addr, uint8_t maxRetries 
 }
 
 
+// * ============================ LED Functions ============================
+
+void changeStatusLedState(bool state) {
+    digitalWrite(INTERNAL_LED_PIN, state ? LOW : HIGH); // LOW = ON, HIGH = OFF
+    digitalWrite(AMBER_LED_PIN, state ? HIGH : LOW); // Inverse for AMBER LED
+}
+
+
 // * ============================= Initialization Functions ============================
 
-bool initLed() {
+bool initStatusLed() {
     pinMode(INTERNAL_LED_PIN, OUTPUT);
-    digitalWrite(INTERNAL_LED_PIN, LOW); // LED on initially
-    Serial.println("Identify LED initialized on pin " + String(INTERNAL_LED_PIN));
+    pinMode(AMBER_LED_PIN, OUTPUT);
+    changeStatusLedState(true);
+    Serial.println("Identify LED initialized on pin " + String(INTERNAL_LED_PIN) + " and AMBER LED on pin " + String(AMBER_LED_PIN));
     return true;
 }
 
@@ -328,14 +340,14 @@ void setup() {
     // Initialize serial
     Serial.begin(115200);
 
-    if (!initLed()) ESP.restart();
+    if (!initStatusLed()) ESP.restart();
     if (!initSensor()) ESP.restart();
     if (!initGPSSerial()) ESP.restart();
     if (!initPPS()) ESP.restart();
     if (!initESPNow()) ESP.restart();
     if (!initGPSTimeSync()) ESP.restart();
     Serial.println("-----ESP initialized and ready to be used-----");
-    digitalWrite(INTERNAL_LED_PIN, HIGH); // LED off
+    changeStatusLedState(false);
 }
 
 
@@ -373,7 +385,7 @@ void loop() {
     if (identifyRequested) {
         if (millis() >= identifyLedEndTime) {
             // Time's up, turn LED off
-            digitalWrite(INTERNAL_LED_PIN, HIGH);
+            changeStatusLedState(false);
             identifyRequested = false;
             Serial.println("Identify LED turned off");
         }

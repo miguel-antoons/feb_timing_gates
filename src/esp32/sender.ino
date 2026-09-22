@@ -241,6 +241,12 @@ void changeStatusLedState(bool state) {
 }
 
 
+void changeBeamAlignmentState(bool state) {
+    digitalWrite(ALIGNMENT_LASER_PIN, state ? HIGH : LOW);
+    digitalWrite(GREEN_LED_PIN, state ? HIGH : LOW);
+}
+
+
 // * ============================= Initialization Functions ============================
 
 bool initStatusLed() {
@@ -250,6 +256,16 @@ bool initStatusLed() {
     Serial.println("Identify LED initialized on pin " + String(INTERNAL_LED_PIN) + " and AMBER LED on pin " + String(AMBER_LED_PIN));
     return true;
 }
+
+
+bool initBeamAlignment() {
+    pinMode(ALIGNMENT_LASER_PIN, OUTPUT);
+    pinMode(GREEN_LED_PIN, OUTPUT);
+    changeBeamAlignmentState(false);
+    Serial.println("Beam alignment laser initialized on pin " + String(ALIGNMENT_LASER_PIN) + " and GREEN LED on pin " + String(GREEN_LED_PIN));
+    return true;
+}
+
 
 bool initSensor() {
     pinMode(SENSOR_PIN, INPUT_PULLUP);
@@ -341,6 +357,7 @@ void setup() {
     Serial.begin(115200);
 
     if (!initStatusLed()) ESP.restart();
+    if (!initBeamAlignment()) ESP.restart();
     if (!initSensor()) ESP.restart();
     if (!initGPSSerial()) ESP.restart();
     if (!initPPS()) ESP.restart();
@@ -375,9 +392,11 @@ void loop() {
             }
         }
 
+        changeBeamAlignmentState(true);
         beamAlreadyBroken = true;
         lastSendTime = millis();
     } else if (beamAlreadyBroken) {
+        if (sensorState == LOW) changeBeamAlignmentState(false);
         if (millis() - lastSendTime >= SEND_INTERVAL_MS) beamAlreadyBroken = false;
     }
     

@@ -71,7 +71,7 @@ typedef struct struct_message {
     uint32_t timestamp_s;     // Unix Epoch Seconds
     uint32_t timestamp_us;    // Microseconds since last second (0-999999)
     uint32_t event;
-    uint8_t mac_address[6];  // Sender's MAC address for identification
+    uint8_t mac_address[6];   // Sender's MAC address for identification
 } struct_message;
 
 struct_message myData;
@@ -141,10 +141,16 @@ void readGPS() {
                     uint32_t parsed_epoch = getEpochSeconds(gps.date, gps.time);
                     
                     portENTER_CRITICAL(&timerMux);
+                    bool was_synchronized = time_is_synchronized;
                     last_utc_epoch = parsed_epoch;
                     base_pps_anchor_us = captured_pps;
                     time_is_synchronized = true;
                     portEXIT_CRITICAL(&timerMux);
+
+                    if (!was_synchronized) {
+                        Serial.println("GPS time synchronized successfully!");
+                        changeStatusLedState(false);
+                    }
                 }
             }
         }
@@ -192,7 +198,7 @@ void OnDataRecv(const esp_now_recv_info_t *recv_info, const uint8_t *receivedDat
             Serial.println("Identify request received for this sender!");
             identifyRequested = true;
             identifyLedEndTime = millis() + IDENTIFY_LED_DURATION;
-            changeStatusLedState(true);
+            if (time_is_synchronized) changeStatusLedState(true);
         }
     }
 }
@@ -237,7 +243,7 @@ bool sendWithRetry(struct_message *msg, const uint8_t *addr, uint8_t maxRetries 
 
 void changeStatusLedState(bool state) {
     digitalWrite(INTERNAL_LED_PIN, state ? LOW : HIGH); // LOW = ON, HIGH = OFF
-    digitalWrite(AMBER_LED_PIN, state ? HIGH : LOW); // Inverse for AMBER LED
+    digitalWrite(AMBER_LED_PIN, state ? HIGH : LOW);   // Inverse for AMBER LED
 }
 
 
@@ -274,17 +280,6 @@ bool initSensor() {
 }
 
 
-bool initGPSTimeSync() {
-    Serial.println("Waiting for GPS time synchronization...");
-    while (!time_is_synchronized) {
-        readGPS();
-        yield();
-    }
-    Serial.println("GPS time synchronized");
-    return true;
-}
-
-
 bool initGPSSerial() {
     gpsSerial.begin(9600, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
     delay(200);
@@ -307,7 +302,6 @@ bool initPPS() {
 
 
 bool initESPNow() {
-    // ESP-NOW setup
     WiFi.mode(WIFI_STA);
     WiFi.disconnect(); // Stop background AP scanning
         
@@ -353,7 +347,6 @@ bool initESPNow() {
 void setup() {
     setenv("TZ", "UTC0", 1);
     tzset();
-    // Initialize serial
     Serial.begin(115200);
 
     if (!initStatusLed()) ESP.restart();
@@ -362,21 +355,19 @@ void setup() {
     if (!initGPSSerial()) ESP.restart();
     if (!initPPS()) ESP.restart();
     if (!initESPNow()) ESP.restart();
-    if (!initGPSTimeSync()) ESP.restart();
     Serial.println("-----ESP initialized and ready to be used-----");
-    changeStatusLedState(false);
 }
-
 
 
 void loop() {
     readGPS();
-    // Read laser sensor state
-    sensorState = digitalRead(SENSOR_PIN);
     
+    sensorState = digitalRead(SENSOR_PIN);
     if (sensorState == HIGH && !beamAlreadyBroken) {
         uint32_t current_s = 0;
         uint32_t current_us = 0;
+        
+        // Only transmit event if precise time lock exists
         if (getPreciseTime(current_s, current_us)) {
             myData.message_type = BEAM_EVENT;
             myData.timestamp_s = current_s;
@@ -385,11 +376,13 @@ void loop() {
             myData.event = ++eventCounter;
             
             Serial.printf("Event #%lu Timestamp: %lu.%06lu\n", 
-                            eventCounter, myData.timestamp_s, myData.timestamp_us);
+                          eventCounter, myData.timestamp_s, myData.timestamp_us);
             
             if (!sendWithRetry(&myData, receiverAddress, 5, 100)) {
                 Serial.println("ESP-NOW send failed after retries");
             }
+        } else {
+            Serial.println("Beam broken, but GPS time not synchronized yet (event suppressed).");
         }
 
         changeBeamAlignmentState(true);
@@ -401,7 +394,7 @@ void loop() {
     }
     
     // Handle identify LED timing
-    if (identifyRequested) {
+    if (identifyRequested && time_is_synchronized) {
         if (millis() >= identifyLedEndTime) {
             // Time's up, turn LED off
             changeStatusLedState(false);

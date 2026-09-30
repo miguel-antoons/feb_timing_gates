@@ -248,8 +248,8 @@ void changeStatusLedState(bool state) {
 
 
 void changeBeamAlignmentState(bool state) {
-    digitalWrite(ALIGNMENT_LASER_PIN, state ? HIGH : LOW);
     digitalWrite(GREEN_LED_PIN, state ? HIGH : LOW);
+    // digitalWrite(ALIGNMENT_LASER_PIN, state ? HIGH : LOW);
 }
 
 
@@ -363,6 +363,18 @@ void loop() {
     readGPS();
     
     sensorState = digitalRead(SENSOR_PIN);
+
+    // Handle beam alignment LED state
+    static bool ledIsOn = false; 
+    if (sensorState == HIGH && !ledIsOn) {
+        changeBeamAlignmentState(true);
+        ledIsOn = true;
+    } else if (sensorState == LOW && ledIsOn) {
+        changeBeamAlignmentState(false);
+        ledIsOn = false;
+    }
+
+    // Handle beam break event
     if (sensorState == HIGH && !beamAlreadyBroken) {
         uint32_t current_s = 0;
         uint32_t current_us = 0;
@@ -375,21 +387,19 @@ void loop() {
             memcpy(myData.mac_address, localMacAddress, 6);
             myData.event = ++eventCounter;
             
-            Serial.printf("Event #%lu Timestamp: %lu.%06lu\n", 
-                          eventCounter, myData.timestamp_s, myData.timestamp_us);
+            // Serial.printf("Event #%lu Timestamp: %lu.%06lu\n", 
+            //               eventCounter, myData.timestamp_s, myData.timestamp_us);
             
             if (!sendWithRetry(&myData, receiverAddress, 5, 100)) {
                 Serial.println("ESP-NOW send failed after retries");
             }
         } else {
-            Serial.println("Beam broken, but GPS time not synchronized yet (event suppressed).");
+            // Serial.println("Beam broken, but GPS time not synchronized yet (event suppressed).");
         }
 
-        changeBeamAlignmentState(true);
         beamAlreadyBroken = true;
         lastSendTime = millis();
     } else if (beamAlreadyBroken) {
-        if (sensorState == LOW) changeBeamAlignmentState(false);
         if (millis() - lastSendTime >= SEND_INTERVAL_MS) beamAlreadyBroken = false;
     }
     
